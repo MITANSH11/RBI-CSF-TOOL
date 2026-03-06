@@ -1,0 +1,600 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* ══════════════════════════════════════════
+   GLOBAL RESET
+══════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.stApp {
+    font-family: 'IBM Plex Sans', sans-serif !important;
+    transition: background-color 0.35s ease;
+}
+
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 2rem !important;
+    max-width: 1240px !important;
+}
+
+.stApp .block-container p,
+.stApp .block-container li,
+.stApp .block-container span,
+.stApp .block-container div,
+.stApp .block-container label {
+    color: var(--text-primary) !important;
+}
+
+/* ══════════════════════════════════════════
+   SIDEBAR  — Cleaner, tighter, modern
+══════════════════════════════════════════ */
+
+section[data-testid="stSidebar"] {
+    transition: background 0.35s ease, border-color 0.35s ease;
+    min-width: 272px !important;
+    max-width: 272px !important;
+}
+
+/* Nav items */
+section[data-testid="stSidebar"] .stRadio > div {
+    gap: 2px !important;
+}
+
+section[data-testid="stSidebar"] .stRadio label {
+    font-size: 12.5px !important;
+    padding: 9px 14px 9px 12px !important;
+    border-radius: 10px !important;
+    transition: all 0.18s ease;
+    border: 1px solid transparent !important;
+    margin-bottom: 1px !important;
+}
+
+section[data-testid="stSidebar"] .stRadio label:hover {
+    background: var(--gold-dim) !important;
+    border-color: rgba(201,168,76,0.15) !important;
+    padding-left: 17px !important;
+}
+
+section[data-testid="stSidebar"] input:checked + div {
+    border-left: 3px solid var(--gold) !important;
+    background: var(--gold-dim) !important;
+    border-radius: 10px !important;
+}
+
+/* ══════════════════════════════════════════
+   TYPOGRAPHY
+══════════════════════════════════════════ */
+
+h1, h2, h3 {
+    font-family: 'Rajdhani', sans-serif !important;
+    letter-spacing: 0.5px !important;
+    color: var(--text-primary) !important;
+}
+
+/* ══════════════════════════════════════════
+   METRIC CARDS  — Elevated, animated top bar
+══════════════════════════════════════════ */
+
+[data-testid="metric-container"] {
+    border-radius: 16px !important;
+    padding: 20px 22px 18px !important;
+    border: 1px solid var(--border) !important;
+    background: var(--bg-card) !important;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Gold top-stripe that appears on hover */
+[data-testid="metric-container"]::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    opacity: 0;
+    transition: opacity 0.22s ease;
+    border-radius: 16px 16px 0 0;
+}
+
+[data-testid="metric-container"]:hover::before { opacity: 1; }
+
+[data-testid="metric-container"]:hover {
+    border-color: var(--border-glow) !important;
+    box-shadow: 0 6px 28px rgba(0,0,0,0.13) !important;
+    transform: translateY(-3px);
+}
+
+[data-testid="stMetricLabel"] {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    color: var(--text-secondary) !important;
+    margin-bottom: 4px !important;
+}
+
+[data-testid="stMetricValue"] {
+    font-family: 'Rajdhani', sans-serif !important;
+    font-size: 2.15rem !important;
+    font-weight: 700 !important;
+    color: var(--gold) !important;
+    line-height: 1.05 !important;
+}
+
+[data-testid="stMetricDelta"] {
+    font-size: 11px !important;
+    margin-top: 2px !important;
+}
+
+/* ══════════════════════════════════════════
+   BUTTONS  — Polish + subtle shimmer
+══════════════════════════════════════════ */
+
+.stDownloadButton > button,
+.stButton > button {
+    background: var(--bg-card) !important;
+    color: var(--gold) !important;
+    border: 1.5px solid var(--gold) !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    letter-spacing: 0.3px !important;
+    padding: 10px 20px !important;
+    transition: all 0.2s ease !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.stDownloadButton > button:hover,
+.stButton > button:hover {
+    background: var(--gold-dim) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 18px rgba(201,168,76,0.22) !important;
+}
+
+/* ══════════════════════════════════════════
+   FILE UPLOADER
+══════════════════════════════════════════ */
+
+[data-testid="stFileUploader"] {
+    background: var(--bg-card) !important;
+    border: 2px dashed var(--border-glow) !important;
+    border-radius: 16px !important;
+    padding: 8px !important;
+    transition: all 0.25s ease !important;
+}
+
+[data-testid="stFileUploader"]:hover {
+    border-color: var(--gold) !important;
+    background: var(--bg-card-hover) !important;
+}
+
+/* ══════════════════════════════════════════
+   INPUTS  — Text + Textarea + Select
+══════════════════════════════════════════ */
+
+.stTextInput input,
+.stTextArea textarea {
+    border-radius: 10px !important;
+    border: 1.5px solid var(--border) !important;
+    background: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    font-size: 13.5px !important;
+    padding: 10px 14px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.stTextInput input:focus,
+.stTextArea textarea:focus {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.11) !important;
+    outline: none !important;
+}
+
+[data-baseweb="select"] > div {
+    border-radius: 10px !important;
+    border: 1.5px solid var(--border) !important;
+    transition: border-color 0.2s ease !important;
+}
+
+[data-baseweb="select"] > div:hover {
+    border-color: var(--border-glow) !important;
+}
+
+/* ══════════════════════════════════════════
+   CHECKBOX
+══════════════════════════════════════════ */
+
+.stCheckbox label {
+    color: var(--text-primary) !important;
+    font-size: 14px !important;
+}
+
+[data-baseweb="checkbox"] svg { stroke-width: 2.5px !important; }
+
+/* ══════════════════════════════════════════
+   DATAFRAME  — Rounder, cleaner
+══════════════════════════════════════════ */
+
+[data-testid="stDataFrame"] {
+    border: 1px solid var(--border) !important;
+    border-radius: 14px !important;
+    overflow: hidden;
+}
+
+/* ══════════════════════════════════════════
+   TABLE FIX
+══════════════════════════════════════════ */
+
+.rbi-card table td { color: var(--text-secondary) !important; }
+.rbi-card table th { color: var(--text-dim) !important; }
+
+/* ══════════════════════════════════════════
+   PROGRESS BAR  — Taller + smoother
+══════════════════════════════════════════ */
+
+.stProgress > div {
+    border-radius: 8px !important;
+    height: 8px !important;
+    background: var(--border) !important;
+}
+
+.stProgress > div > div {
+    background: linear-gradient(90deg, var(--gold), var(--gold-light)) !important;
+    border-radius: 8px !important;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1) !important;
+}
+
+/* ══════════════════════════════════════════
+   RBI PAGE HEADER
+══════════════════════════════════════════ */
+
+.rbi-page-header {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--gold);
+    border-radius: 16px;
+    padding: 26px 32px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle radial glow in corner */
+.rbi-page-header::after {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, var(--gold-dim) 0%, transparent 68%);
+    pointer-events: none;
+}
+
+.rbi-page-header h1 {
+    font-size: 1.52rem !important;
+    margin: 0 0 5px 0 !important;
+    letter-spacing: 1px !important;
+}
+
+.rbi-page-header p {
+    color: var(--text-secondary) !important;
+    font-size: 13px !important;
+    margin: 0 !important;
+}
+
+/* ══════════════════════════════════════════
+   SECTION TITLE
+══════════════════════════════════════════ */
+
+.rbi-section-title {
+    font-family: 'Rajdhani', sans-serif !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1.8px !important;
+    text-transform: uppercase !important;
+    color: var(--text-secondary) !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 16px !important;
+}
+
+/* ══════════════════════════════════════════
+   RBI CARD  — Elevated, layered
+══════════════════════════════════════════ */
+
+.rbi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 26px;
+    margin-bottom: 14px;
+    transition: border-color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
+    position: relative;
+}
+
+.rbi-card:hover {
+    border-color: var(--border-glow);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+/* Accent left borders — 4px instead of 3px */
+.rbi-card-gold  { border-left: 4px solid var(--gold); }
+.rbi-card-green { border-left: 4px solid var(--compliant); }
+.rbi-card-amber { border-left: 4px solid var(--partial); }
+.rbi-card-red   { border-left: 4px solid var(--noncompliant); }
+.rbi-card-blue  { border-left: 4px solid var(--blue-ice); }
+
+/* ══════════════════════════════════════════
+   STAT STRIP  — Unified horizontal KPI bar
+══════════════════════════════════════════ */
+
+.rbi-stat-strip {
+    display: flex;
+    align-items: stretch;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.rbi-stat-item {
+    flex: 1;
+    padding: 18px 16px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    transition: background 0.18s ease;
+}
+
+.rbi-stat-item:last-child { border-right: none; }
+.rbi-stat-item:hover      { background: var(--bg-card-hover); }
+
+.rbi-stat-item .stat-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+}
+
+.rbi-stat-item .stat-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+}
+
+/* ══════════════════════════════════════════
+   BADGES  — Outlined pill style
+══════════════════════════════════════════ */
+
+.rbi-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+}
+
+.badge-green  { background: rgba(34,197,94,0.10);   color: var(--compliant);    border: 1px solid rgba(34,197,94,0.28); }
+.badge-amber  { background: rgba(245,158,11,0.10);  color: var(--partial);      border: 1px solid rgba(245,158,11,0.28); }
+.badge-red    { background: rgba(239,68,68,0.10);   color: var(--noncompliant); border: 1px solid rgba(239,68,68,0.28); }
+.badge-gold   { background: var(--gold-dim);         color: var(--gold);         border: 1px solid rgba(201,168,76,0.28); }
+.badge-blue   { background: rgba(79,195,247,0.10);  color: var(--blue-ice);     border: 1px solid rgba(79,195,247,0.28); }
+.badge-purple { background: rgba(168,85,247,0.10);  color: #a855f7;             border: 1px solid rgba(168,85,247,0.28); }
+.badge-grey   { background: rgba(100,116,139,0.10); color: var(--na);           border: 1px solid rgba(100,116,139,0.28); }
+
+/* ══════════════════════════════════════════
+   AUDIT TRAIL  — Timeline + Log Cards
+══════════════════════════════════════════ */
+
+.audit-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.audit-timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px; top: 6px; bottom: 6px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    border-radius: 2px;
+}
+
+.audit-event {
+    position: relative;
+    margin-bottom: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.audit-event:hover {
+    border-color: var(--border-glow);
+    transform: translateX(3px);
+}
+
+.audit-event::before {
+    content: '';
+    position: absolute;
+    left: -25px; top: 16px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--bg-base);
+    box-shadow: 0 0 0 2px var(--gold);
+}
+
+.audit-event.event-upload::before  { background: var(--blue-ice);     box-shadow: 0 0 0 2px var(--blue-ice); }
+.audit-event.event-export::before  { background: var(--compliant);    box-shadow: 0 0 0 2px var(--compliant); }
+.audit-event.event-view::before    { background: var(--partial);      box-shadow: 0 0 0 2px var(--partial); }
+.audit-event.event-change::before  { background: var(--noncompliant); box-shadow: 0 0 0 2px var(--noncompliant); }
+
+.audit-event .ae-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.audit-event .ae-action {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.audit-event .ae-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.audit-event .ae-detail {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    line-height: 1.45;
+}
+
+/* ══════════════════════════════════════════
+   LABEL & INFO ROW
+══════════════════════════════════════════ */
+
+.rbi-label {
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1.4px !important;
+    text-transform: uppercase !important;
+    color: var(--text-dim) !important;
+    margin-bottom: 3px;
+}
+
+.rbi-info-row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.rbi-info-item { display: flex; flex-direction: column; gap: 2px; }
+
+.rbi-info-item .label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+.rbi-info-item .value {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* ══════════════════════════════════════════
+   SIDEBAR COMPONENTS
+══════════════════════════════════════════ */
+
+.sidebar-brand-title    { color: var(--gold) !important; }
+.sidebar-brand-subtitle { color: var(--text-dim) !important; }
+
+.sidebar-section-label {
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1.7px !important;
+    text-transform: uppercase !important;
+    color: var(--text-dim) !important;
+    padding: 8px 2px 4px !important;
+    display: block !important;
+}
+
+.sidebar-footer {
+    font-size: 10px !important;
+    color: var(--text-dim) !important;
+    text-align: center !important;
+    padding: 8px 0 !important;
+    line-height: 1.5 !important;
+}
+
+.sidebar-bank-card {
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 4px 0;
+}
+
+.sidebar-bank-card .bank-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gold);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.sidebar-bank-card .bank-level { margin-top: 5px; }
+
+/* ══════════════════════════════════════════
+   STEP INDICATORS
+══════════════════════════════════════════ */
+
+.step-indicator {
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 7px;
+    margin-bottom: 2px;
+    transition: all 0.18s ease;
+    color: var(--text-dim);
+    display: block;
+    letter-spacing: 0.2px;
+}
+
+.step-indicator.done {
+    color: var(--compliant) !important;
+    background: rgba(34,197,94,0.08);
+}
+
+.step-indicator.active {
+    color: var(--gold) !important;
+    background: var(--gold-dim);
+    font-weight: 600;
+    border-left: 2px solid var(--gold);
+    padding-left: 8px;
+}
+
+/* ══════════════════════════════════════════
+   ALERT
+══════════════════════════════════════════ */
+
+.stAlert {
+    border-radius: 12px !important;
+    font-size: 13px !important;
+}
+
+/* ══════════════════════════════════════════
+   PLOTLY FIX
+══════════════════════════════════════════ */
+
+.js-plotly-plot .plotly .bg { fill: transparent !important; }
+.js-plotly-plot text        { fill: var(--text-secondary) !important; }
+
+/* ══════════════════════════════════════════
+   SCROLLBAR  — Gold accent
+══════════════════════════════════════════ */
+
+::-webkit-scrollbar             { width: 5px; height: 5px; }
+::-webkit-scrollbar-track       { background: transparent; }
+::-webkit-scrollbar-thumb       { background: var(--border-glow); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
