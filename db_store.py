@@ -639,3 +639,4 @@ def admin_stats() -> dict:
         "evidence_files": evidence, "audit_events": audit_evts,
         "evidence_mb": round(float(ev_size) / 1024, 2),
     }
+>>>>>>> b5ac7c553737fba5307d834b572c431b07ee4391
