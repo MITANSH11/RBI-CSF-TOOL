@@ -21,8 +21,24 @@ from typing import Optional, Dict, List, Any
 import pandas as pd
 
 # ── Detect mode ────────────────────────────────────────────────────────────
-_DB_URL  = os.environ.get("RBI_DB_PATH", "")
-_IS_PG   = _DB_URL.startswith("postgres")
+# Streamlit Cloud stores secrets in st.secrets, not os.environ
+def _get_db_url() -> str:
+    # 1. Try os.environ first (local dev / Docker)
+    url = os.environ.get("RBI_DB_PATH", "")
+    if url:
+        return url
+    # 2. Try st.secrets (Streamlit Cloud)
+    try:
+        import streamlit as st
+        url = st.secrets.get("RBI_DB_PATH", "")
+        if url:
+            return url
+    except Exception:
+        pass
+    return ""
+
+_DB_URL = _get_db_url()
+_IS_PG  = _DB_URL.startswith("postgres")
 
 # SQLite fallback path (used when RBI_DB_PATH is not a postgres URL)
 _SQLITE_PATH = (
