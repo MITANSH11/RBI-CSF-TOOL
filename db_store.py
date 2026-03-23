@@ -1,7 +1,7 @@
 """
-db_store.py — Persistent Backend Store
-Dual-mode: PostgreSQL (Supabase) when RBI_DB_PATH is set,
-           SQLite otherwise (local dev).
+db_store.py
+Dual-mode: PostgreSQL (Supabase) or SQLite (local).
+Reads RBI_DB_PATH from st.secrets (Streamlit Cloud) or os.environ (local).
 """
 
 import sqlite3
@@ -11,69 +11,63 @@ import os
 import json
 import io
 from datetime import datetime
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List
 
 import pandas as pd
 
-# SQLite fallback path
 _SQLITE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rbi_csf_data.db")
 DB_PATH = _SQLITE_PATH
 
 
-def _get_db_url() -> str:
-    """Read DB URL lazily — called only when a connection is needed."""
-    # 1. os.environ (local dev / Docker)
+def _get_url():
     url = os.environ.get("RBI_DB_PATH", "")
     if url:
         return url
-    # 2. st.secrets (Streamlit Cloud) — safe to call after app starts
     try:
         import streamlit as st
         url = st.secrets.get("RBI_DB_PATH", "") or ""
-        return str(url)
+        return str(url).strip()
     except Exception:
         return ""
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  POSTGRESQL WRAPPER
-# ══════════════════════════════════════════════════════════════════════════
+def _is_pg():
+    return _get_url().startswith("postgres")
+
 
 class _PGCursor:
-    def __init__(self, raw_cur):
-        self._c = raw_cur
-        self._last_id = None
+    def __init__(self, cur):
+        self._c = cur
+        self.lastrowid = None
 
     def fetchone(self):
         try:
-            row = self._c.fetchone()
-            return dict(row) if row else None
+            r = self._c.fetchone()
+            return dict(r) if r else None
         except Exception:
             return None
 
     def fetchall(self):
         try:
-            rows = self._c.fetchall()
-            return [dict(r) for r in rows]
+            return [dict(r) for r in self._c.fetchall()]
         except Exception:
             return []
-
-    @property
-    def lastrowid(self):
-        return self._last_id
 
     def __iter__(self):
         return iter(self.fetchall())
 
 
 class _PGConn:
-    def __init__(self, url: str):
+    def __init__(self):
         import psycopg2
         import psycopg2.extras
-        self._raw = psycopg2.connect(url, cursor_factory=psycopg2.extras.RealDictCursor)
+        self._raw = psycopg2.connect(
+            _get_url(),
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
     @staticmethod
-    def _adapt(sql: str) -> str:
+    def _fix(sql):
         sql = sql.replace("?", "%s")
         sql = sql.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
         sql = sql.replace("BLOB", "BYTEA")
@@ -81,30 +75,29 @@ class _PGConn:
         lines = [l for l in sql.splitlines() if not l.strip().upper().startswith("PRAGMA")]
         return "\n".join(lines)
 
-    def execute(self, sql: str, params=()):
-        sql = self._adapt(sql)
-        stripped = sql.strip().upper()
-        if stripped.startswith("INSERT") and "RETURNING" not in stripped:
+    def execute(self, sql, params=()):
+        sql = self._fix(sql)
+        upper = sql.strip().upper()
+        if upper.startswith("INSERT") and "RETURNING" not in upper:
             sql = sql.rstrip().rstrip(";") + " RETURNING id"
         cur = self._raw.cursor()
         cur.execute(sql, params or ())
         wrapper = _PGCursor(cur)
-        if stripped.startswith("INSERT"):
+        if upper.startswith("INSERT"):
             try:
                 row = cur.fetchone()
-                wrapper._last_id = dict(row).get("id") if row else None
+                wrapper.lastrowid = dict(row).get("id") if row else None
             except Exception:
                 pass
         return wrapper
 
-    def executescript(self, script: str):
+    def executescript(self, script):
         cur = self._raw.cursor()
         for stmt in script.split(";"):
             stmt = stmt.strip()
             if stmt:
-                stmt = self._adapt(stmt)
                 try:
-                    cur.execute(stmt)
+                    cur.execute(self._fix(stmt))
                 except Exception:
                     self._raw.rollback()
                     raise
@@ -120,15 +113,9 @@ class _PGConn:
         self._raw.close()
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  CONNECTION HELPER
-# ══════════════════════════════════════════════════════════════════════════
-
 def _conn():
-    url = _get_db_url()
-    if url and url.startswith("postgres"):
-        return _PGConn(url)
-    # SQLite fallback
+    if _is_pg():
+        return _PGConn()
     con = sqlite3.connect(_SQLITE_PATH, check_same_thread=False, timeout=10)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA journal_mode=WAL")
@@ -136,19 +123,15 @@ def _conn():
     return con
 
 
-def _row(r) -> dict:
+def _row(r):
     if r is None:
         return {}
-    if isinstance(r, dict):
-        return r
-    return dict(r)
+    return dict(r) if not isinstance(r, dict) else r
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  SCHEMA INIT
-# ══════════════════════════════════════════════════════════════════════════
+# ── SCHEMA ─────────────────────────────────────────────────────────────────
 
-def init_db() -> None:
+def init_db():
     with _conn() as con:
         con.executescript("""
         CREATE TABLE IF NOT EXISTS users (
@@ -160,7 +143,6 @@ def init_db() -> None:
             created_at    TEXT    NOT NULL,
             last_login    TEXT
         );
-
         CREATE TABLE IF NOT EXISTS bank_profiles (
             user_id       INTEGER PRIMARY KEY,
             bank_name     TEXT,
@@ -169,7 +151,6 @@ def init_db() -> None:
             updated_at    TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
-
         CREATE TABLE IF NOT EXISTS compliance_data (
             user_id       INTEGER PRIMARY KEY,
             summary_json  TEXT,
@@ -177,14 +158,12 @@ def init_db() -> None:
             updated_at    TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
-
         CREATE TABLE IF NOT EXISTS gap_data (
             user_id       INTEGER PRIMARY KEY,
             gap_csv       TEXT,
             updated_at    TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
-
         CREATE TABLE IF NOT EXISTS evidence_files (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id       INTEGER NOT NULL,
@@ -199,9 +178,7 @@ def init_db() -> None:
             uploaded_at   TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
-
         CREATE INDEX IF NOT EXISTS idx_evidence_user ON evidence_files(user_id);
-
         CREATE TABLE IF NOT EXISTS audit_events (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id       INTEGER NOT NULL,
@@ -212,9 +189,7 @@ def init_db() -> None:
             module        TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
-
         CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_events(user_id);
-
         CREATE TABLE IF NOT EXISTS compliance_history (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id       INTEGER NOT NULL,
@@ -230,9 +205,7 @@ def init_db() -> None:
             file_names    TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
-
         CREATE INDEX IF NOT EXISTS idx_history_user ON compliance_history(user_id);
-
         CREATE TABLE IF NOT EXISTS gap_history (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id       INTEGER NOT NULL,
@@ -244,46 +217,38 @@ def init_db() -> None:
             file_names    TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
-
-        CREATE INDEX IF NOT EXISTS idx_gap_history_user ON gap_history(user_id);
+        CREATE INDEX IF NOT EXISTS idx_gap_history_user ON gap_history(user_id)
         """)
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  PASSWORD UTILITIES
-# ══════════════════════════════════════════════════════════════════════════
+# ── PASSWORDS ──────────────────────────────────────────────────────────────
 
-def _new_salt() -> str:
+def _new_salt():
     return os.urandom(32).hex()
 
-
-def _hash_password(password: str, salt: str) -> str:
-    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"),
-                              bytes.fromhex(salt), iterations=260_000, dklen=32)
+def _hash_password(password, salt):
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt), 260_000, 32)
     return dk.hex()
 
+def _verify_password(password, salt, stored):
+    return hmac.compare_digest(_hash_password(password, salt), stored)
 
-def _verify_password(password: str, salt: str, stored_hash: str) -> bool:
-    return hmac.compare_digest(_hash_password(password, salt), stored_hash)
 
+# ── USERS ──────────────────────────────────────────────────────────────────
 
-# ══════════════════════════════════════════════════════════════════════════
-#  USER MANAGEMENT
-# ══════════════════════════════════════════════════════════════════════════
-
-def create_user(username: str, password: str, role: str = "user") -> Dict:
+def create_user(username, password, role="user"):
     if len(username.strip()) < 3:
         return {"ok": False, "error": "Username must be at least 3 characters."}
     if len(password) < 6:
         return {"ok": False, "error": "Password must be at least 6 characters."}
-    salt    = _new_salt()
+    salt = _new_salt()
     pw_hash = _hash_password(password, salt)
-    now     = datetime.now().strftime("%d %b %Y  %H:%M:%S")
+    now = datetime.now().strftime("%d %b %Y  %H:%M:%S")
     try:
         with _conn() as con:
             cur = con.execute(
                 "INSERT INTO users (username, password_hash, salt, role, created_at) VALUES (?,?,?,?,?)",
-                (username.strip(), pw_hash, salt, role, now),
+                (username.strip(), pw_hash, salt, role, now)
             )
             return {"ok": True, "user_id": cur.lastrowid}
     except Exception as e:
@@ -293,12 +258,11 @@ def create_user(username: str, password: str, role: str = "user") -> Dict:
         return {"ok": False, "error": msg}
 
 
-def verify_login(username: str, password: str) -> Optional[Dict]:
-    url = _get_db_url()
-    is_pg = url.startswith("postgres")
+def verify_login(username, password):
+    pg = _is_pg()
     sql = (
         "SELECT id, username, password_hash, salt, role FROM users WHERE LOWER(username) = LOWER(%s)"
-        if is_pg else
+        if pg else
         "SELECT id, username, password_hash, salt, role FROM users WHERE username = ? COLLATE NOCASE"
     )
     with _conn() as con:
@@ -313,7 +277,7 @@ def verify_login(username: str, password: str) -> Optional[Dict]:
     return {"id": row["id"], "username": row["username"], "role": row["role"]}
 
 
-def get_all_users() -> List[Dict]:
+def get_all_users():
     with _conn() as con:
         rows = con.execute(
             "SELECT id, username, role, created_at, last_login FROM users ORDER BY created_at DESC"
@@ -321,27 +285,24 @@ def get_all_users() -> List[Dict]:
     return [_row(r) for r in rows]
 
 
-def delete_user(user_id: int) -> None:
+def delete_user(user_id):
     with _conn() as con:
         con.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
 
-def change_password(user_id: int, new_password: str) -> Dict:
+def change_password(user_id, new_password):
     if len(new_password) < 6:
         return {"ok": False, "error": "Password must be at least 6 characters."}
-    salt    = _new_salt()
+    salt = _new_salt()
     pw_hash = _hash_password(new_password, salt)
     with _conn() as con:
-        con.execute("UPDATE users SET password_hash = ?, salt = ? WHERE id = ?",
-                    (pw_hash, salt, user_id))
+        con.execute("UPDATE users SET password_hash = ?, salt = ? WHERE id = ?", (pw_hash, salt, user_id))
     return {"ok": True}
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  BANK PROFILE
-# ══════════════════════════════════════════════════════════════════════════
+# ── BANK PROFILE ───────────────────────────────────────────────────────────
 
-def save_bank_profile(user_id: int, bank_name: str, bank_level: str, module1_flags: dict) -> None:
+def save_bank_profile(user_id, bank_name, bank_level, module1_flags):
     now = datetime.now().strftime("%d %b %Y  %H:%M:%S")
     with _conn() as con:
         con.execute("""
@@ -353,7 +314,7 @@ def save_bank_profile(user_id: int, bank_name: str, bank_level: str, module1_fla
         """, (user_id, bank_name, bank_level, json.dumps(module1_flags), now))
 
 
-def load_bank_profile(user_id: int) -> Optional[Dict]:
+def load_bank_profile(user_id):
     with _conn() as con:
         row = _row(con.execute("SELECT * FROM bank_profiles WHERE user_id = ?", (user_id,)).fetchone())
     if not row:
@@ -365,11 +326,9 @@ def load_bank_profile(user_id: int) -> Optional[Dict]:
     return row
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  COMPLIANCE DATA
-# ══════════════════════════════════════════════════════════════════════════
+# ── COMPLIANCE ─────────────────────────────────────────────────────────────
 
-def save_compliance(user_id: int, summary: dict, combined_df) -> None:
+def save_compliance(user_id, summary, combined_df):
     now = datetime.now().strftime("%d %b %Y  %H:%M:%S")
     csv_str = combined_df.to_csv(index=False) if combined_df is not None else ""
     with _conn() as con:
@@ -382,24 +341,21 @@ def save_compliance(user_id: int, summary: dict, combined_df) -> None:
         """, (user_id, json.dumps(summary), csv_str, now))
 
 
-def load_compliance(user_id: int) -> tuple:
+def load_compliance(user_id):
     with _conn() as con:
         row = _row(con.execute("SELECT * FROM compliance_data WHERE user_id = ?", (user_id,)).fetchone())
     if not row:
         return None, None
     try:
-        summary = json.loads(row["summary_json"])
         df = pd.read_csv(io.StringIO(row["combined_csv"])) if row.get("combined_csv") else None
-        return summary, df
+        return json.loads(row["summary_json"]), df
     except Exception:
         return None, None
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  GAP DATA
-# ══════════════════════════════════════════════════════════════════════════
+# ── GAP DATA ───────────────────────────────────────────────────────────────
 
-def save_gaps(user_id: int, gap_df) -> None:
+def save_gaps(user_id, gap_df):
     now = datetime.now().strftime("%d %b %Y  %H:%M:%S")
     csv_str = gap_df.to_csv(index=False) if gap_df is not None else ""
     with _conn() as con:
@@ -409,7 +365,7 @@ def save_gaps(user_id: int, gap_df) -> None:
         """, (user_id, csv_str, now))
 
 
-def load_gaps(user_id: int) -> Optional[pd.DataFrame]:
+def load_gaps(user_id):
     with _conn() as con:
         row = _row(con.execute("SELECT * FROM gap_data WHERE user_id = ?", (user_id,)).fetchone())
     if not row or not row.get("gap_csv"):
@@ -420,11 +376,9 @@ def load_gaps(user_id: int) -> Optional[pd.DataFrame]:
         return None
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  EVIDENCE FILES
-# ══════════════════════════════════════════════════════════════════════════
+# ── EVIDENCE ───────────────────────────────────────────────────────────────
 
-def save_evidence_entry(user_id: int, entry: dict) -> int:
+def save_evidence_entry(user_id, entry):
     with _conn() as con:
         cur = con.execute("""
             INSERT INTO evidence_files
@@ -436,17 +390,17 @@ def save_evidence_entry(user_id: int, entry: dict) -> int:
             entry.get("file_ext", ""), entry.get("evidence_type", ""),
             entry.get("notes", ""), entry.get("file_bytes", b""),
             entry.get("size_kb", 0),
-            entry.get("uploaded_at", datetime.now().strftime("%d %b %Y  %H:%M:%S")),
+            entry.get("uploaded_at", datetime.now().strftime("%d %b %Y  %H:%M:%S"))
         ))
         return cur.lastrowid
 
 
-def delete_evidence_entry(db_id: int) -> None:
+def delete_evidence_entry(db_id):
     with _conn() as con:
         con.execute("DELETE FROM evidence_files WHERE id = ?", (db_id,))
 
 
-def load_evidence_store(user_id: int) -> dict:
+def load_evidence_store(user_id):
     with _conn() as con:
         rows = con.execute(
             "SELECT * FROM evidence_files WHERE user_id = ? ORDER BY uploaded_at ASC", (user_id,)
@@ -468,16 +422,14 @@ def load_evidence_store(user_id: int) -> dict:
     return store
 
 
-def clear_evidence(user_id: int) -> None:
+def clear_evidence(user_id):
     with _conn() as con:
         con.execute("DELETE FROM evidence_files WHERE user_id = ?", (user_id,))
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  AUDIT LOG
-# ══════════════════════════════════════════════════════════════════════════
+# ── AUDIT ──────────────────────────────────────────────────────────────────
 
-def save_audit_event(user_id: int, event: dict) -> None:
+def save_audit_event(user_id, event):
     with _conn() as con:
         con.execute("""
             INSERT INTO audit_events (user_id, timestamp, event_type, action, detail, module)
@@ -486,11 +438,11 @@ def save_audit_event(user_id: int, event: dict) -> None:
             user_id,
             event.get("timestamp", datetime.now().strftime("%d %b %Y  %H:%M:%S")),
             event.get("type", "system"), event.get("action", ""),
-            event.get("detail", ""), event.get("module", "app"),
+            event.get("detail", ""), event.get("module", "app")
         ))
 
 
-def load_audit_log(user_id: int) -> List[dict]:
+def load_audit_log(user_id):
     with _conn() as con:
         rows = con.execute(
             "SELECT * FROM audit_events WHERE user_id = ? ORDER BY id ASC", (user_id,)
@@ -500,25 +452,23 @@ def load_audit_log(user_id: int) -> List[dict]:
              "module": _row(r)["module"]} for r in rows]
 
 
-def clear_audit_log(user_id: int) -> None:
+def clear_audit_log(user_id):
     with _conn() as con:
         con.execute("DELETE FROM audit_events WHERE user_id = ?", (user_id,))
 
 
-def append_audit_event(user_id: int, event: dict) -> None:
+def append_audit_event(user_id, event):
     save_audit_event(user_id, event)
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  SESSION HELPERS
-# ══════════════════════════════════════════════════════════════════════════
+# ── SESSION ────────────────────────────────────────────────────────────────
 
-def load_full_session(user_id: int) -> dict:
+def load_full_session(user_id):
     state = {}
     profile = load_bank_profile(user_id)
     if profile:
-        state["bank_name"]     = profile.get("bank_name", "")
-        state["bank_level"]    = profile.get("bank_level", "")
+        state["bank_name"] = profile.get("bank_name", "")
+        state["bank_level"] = profile.get("bank_level", "")
         state["module1_flags"] = profile.get("module1_flags", {})
     summary, combined_df = load_compliance(user_id)
     if summary:
@@ -529,14 +479,14 @@ def load_full_session(user_id: int) -> dict:
     if gap_df is not None:
         state["gap_dataframe"] = gap_df
     state["evidence_store"] = load_evidence_store(user_id)
-    state["audit_log"]      = load_audit_log(user_id)
+    state["audit_log"] = load_audit_log(user_id)
     return state
 
 
-def save_full_session(user_id: int, ss: dict) -> None:
-    bank_name  = ss.get("bank_name", "")
+def save_full_session(user_id, ss):
+    bank_name = ss.get("bank_name", "")
     bank_level = ss.get("bank_level", "")
-    flags      = ss.get("module1_flags", {})
+    flags = ss.get("module1_flags", {})
     if bank_name or bank_level:
         save_bank_profile(user_id, bank_name, bank_level, flags)
     summary = ss.get("compliance_summary")
@@ -547,11 +497,9 @@ def save_full_session(user_id: int, ss: dict) -> None:
         save_gaps(user_id, gap_df)
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  COMPLIANCE HISTORY
-# ══════════════════════════════════════════════════════════════════════════
+# ── HISTORY ────────────────────────────────────────────────────────────────
 
-def save_compliance_snapshot(user_id: int, summary: dict, file_names: list, bank_level: str) -> None:
+def save_compliance_snapshot(user_id, summary, file_names, bank_level):
     now = datetime.now().strftime("%d %b %Y  %H:%M:%S")
     with _conn() as con:
         con.execute("""
@@ -565,11 +513,11 @@ def save_compliance_snapshot(user_id: int, summary: dict, file_names: list, bank
               summary.get("risk", ""), bank_level, json.dumps(file_names)))
 
 
-def load_compliance_history(user_id: int, limit: int = 20) -> List[dict]:
+def load_compliance_history(user_id, limit=20):
     with _conn() as con:
         rows = con.execute(
             "SELECT * FROM compliance_history WHERE user_id = ? ORDER BY id DESC LIMIT ?",
-            (user_id, limit),
+            (user_id, limit)
         ).fetchall()
     result = []
     for r in reversed(rows):
@@ -584,13 +532,12 @@ def load_compliance_history(user_id: int, limit: int = 20) -> List[dict]:
     return result
 
 
-def clear_compliance_history(user_id: int) -> None:
+def clear_compliance_history(user_id):
     with _conn() as con:
         con.execute("DELETE FROM compliance_history WHERE user_id = ?", (user_id,))
 
 
-def save_gap_snapshot(user_id: int, total: int, high: int, medium: int,
-                      critical: int, file_names: list) -> None:
+def save_gap_snapshot(user_id, total, high, medium, critical, file_names):
     now = datetime.now().strftime("%d %b %Y  %H:%M:%S")
     with _conn() as con:
         con.execute("""
@@ -600,11 +547,11 @@ def save_gap_snapshot(user_id: int, total: int, high: int, medium: int,
         """, (user_id, now, total, high, medium, critical, json.dumps(file_names)))
 
 
-def load_gap_history(user_id: int, limit: int = 20) -> List[dict]:
+def load_gap_history(user_id, limit=20):
     with _conn() as con:
         rows = con.execute(
             "SELECT * FROM gap_history WHERE user_id = ? ORDER BY id DESC LIMIT ?",
-            (user_id, limit),
+            (user_id, limit)
         ).fetchall()
     result = []
     for r in reversed(rows):
@@ -618,22 +565,20 @@ def load_gap_history(user_id: int, limit: int = 20) -> List[dict]:
     return result
 
 
-def clear_gap_history(user_id: int) -> None:
+def clear_gap_history(user_id):
     with _conn() as con:
         con.execute("DELETE FROM gap_history WHERE user_id = ?", (user_id,))
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  ADMIN STATS
-# ══════════════════════════════════════════════════════════════════════════
+# ── ADMIN ──────────────────────────────────────────────────────────────────
 
-def admin_stats() -> dict:
+def admin_stats():
     with _conn() as con:
-        users      = _row(con.execute("SELECT COUNT(*) AS c FROM users").fetchone()).get("c", 0)
-        profiles   = _row(con.execute("SELECT COUNT(*) AS c FROM bank_profiles").fetchone()).get("c", 0)
-        evidence   = _row(con.execute("SELECT COUNT(*) AS c FROM evidence_files").fetchone()).get("c", 0)
+        users = _row(con.execute("SELECT COUNT(*) AS c FROM users").fetchone()).get("c", 0)
+        profiles = _row(con.execute("SELECT COUNT(*) AS c FROM bank_profiles").fetchone()).get("c", 0)
+        evidence = _row(con.execute("SELECT COUNT(*) AS c FROM evidence_files").fetchone()).get("c", 0)
         audit_evts = _row(con.execute("SELECT COUNT(*) AS c FROM audit_events").fetchone()).get("c", 0)
-        ev_size    = _row(con.execute("SELECT COALESCE(SUM(size_kb),0) AS s FROM evidence_files").fetchone()).get("s", 0)
+        ev_size = _row(con.execute("SELECT COALESCE(SUM(size_kb),0) AS s FROM evidence_files").fetchone()).get("s", 0)
     return {
         "total_users": users, "active_banks": profiles,
         "evidence_files": evidence, "audit_events": audit_evts,
