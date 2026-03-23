@@ -135,6 +135,7 @@ def generate_docx(bank_name, level, today, summary, gaps):
         ("Partially Compliant",      str(summary["partial"])),
         ("Non-Compliant Controls",   str(summary["non"])),
         ("Not Applicable",           str(summary["na"])),
+        ("Not Assessed (Unfilled)",  str(summary.get("not_assessed", 0))),
         ("Compliance Score",         f"{pct}%"),
         ("Risk Category",            risk),
     ]
@@ -479,7 +480,12 @@ def show_module5():
     light = _is_light()
 
     # Page header
-    components.html(_page_header_html(light), height=108, scrolling=False)
+    st.markdown("""
+    <div class="rbi-page-header">
+        <h1>📊 MODULE 5 — GAP ANALYSIS REPORT</h1>
+        <p>Review your compliance posture and export the gap analysis report in Word format</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     _log("view", "Gap Analysis Report viewed")
 
@@ -514,11 +520,12 @@ def show_module5():
     # ── KPI stat strip ─────────────────────────────────
     st.markdown('<div class="rbi-section-title">Compliance Summary</div>', unsafe_allow_html=True)
     strip_items = [
-        ("Total Controls",  summary["total"],     None),
-        ("Compliant",       summary["compliant"], "#15803d"),
-        ("Partial",         summary["partial"],   "#b45309"),
-        ("Non-Compliant",   summary["non"],        "#b91c1c"),
-        ("N/A",             summary["na"],         None),
+        ("Total Controls",  summary["total"],                    None),
+        ("Compliant",       summary["compliant"],                "#15803d"),
+        ("Partial",         summary["partial"],                  "#b45309"),
+        ("Non-Compliant",   summary["non"],                      "#b91c1c"),
+        ("N/A",             summary["na"],                       None),
+        ("Not Assessed",    summary.get("not_assessed", 0),     "#475569"),
     ]
     components.html(_stat_strip_html(strip_items, light), height=95, scrolling=False)
 

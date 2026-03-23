@@ -15,7 +15,7 @@ STATUS_NORM = {
     "not compliant":         "Not Compliant",
     "not applicable":        "Not Applicable",
     "n/a":                   "Not Applicable",
-    "select":                None,
+    "select":                "Not Assessed",   # unfilled row — still a valid control
 }
 
 COLORS   = {"Not Compliant": "#ef4444", "Partially Compliant": "#f59e0b"}
@@ -39,6 +39,7 @@ ANNEX4_CRITICAL = {
     "it strategy committee", "it steering committee",
     "information security committee",
     "audit committee",
+    "aiv-6", "aiv-1",
 }
 
 
@@ -180,29 +181,35 @@ def _render_gaps(gap_df, file_names):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Charts ─────────────────────────────────────────────────
+    # ── Charts Row 1: Priority donut · Gaps by annex (stacked) · Gap % per annex ──
     st.markdown('<div class="rbi-section-title">Gap Distribution</div>', unsafe_allow_html=True)
-    ch1, ch2 = st.columns(2)
+    ch1, ch2, ch3 = st.columns([1.1, 1.4, 1.5])
 
     with ch1:
         CHART_FONT, GRID_COLOR, PIE_LINE = _chart_settings()
-        pie_labels  = ["High Priority", "Medium Priority"]
-        pie_values  = [high_gaps, med_gaps]
-        pie_colors  = ["#ef4444", "#f59e0b"]
+        pie_labels = ["High Priority", "Medium Priority"]
+        pie_values = [high_gaps, med_gaps]
+        pie_colors = ["#ef4444", "#f59e0b"]
         if critical_gaps > 0:
             pie_labels.insert(0, "Critical")
             pie_values.insert(0, critical_gaps)
             pie_colors.insert(0, "#a855f7")
+        # filter zeros
+        nz = [(l, v, c) for l, v, c in zip(pie_labels, pie_values, pie_colors) if v > 0]
         fig_pie = go.Figure(go.Pie(
-            labels=pie_labels, values=pie_values,
-            hole=0.58,
-            marker=dict(colors=pie_colors, line=dict(color=PIE_LINE, width=2)),
-            textinfo="percent+label",
-            textfont=dict(size=10, color="white"),
+            labels=[x[0] for x in nz], values=[x[1] for x in nz],
+            hole=0.60,
+            marker=dict(colors=[x[2] for x in nz], line=dict(color=PIE_LINE, width=2)),
+            textinfo="percent",
+            textfont=dict(size=11, color="white"),
+            hovertemplate="%{label}: %{value} gaps (%{percent})<extra></extra>",
         ))
         fig_pie.update_layout(
-            height=250, margin=dict(t=10, b=10, l=10, r=10),
-            paper_bgcolor=CHART_BG, font=CHART_FONT, showlegend=False,
+            height=260, margin=dict(t=10, b=10, l=10, r=10),
+            paper_bgcolor=CHART_BG, font=CHART_FONT,
+            legend=dict(orientation="v", x=1.0, y=0.5,
+                        font=dict(size=10, color=CHART_FONT["color"]),
+                        bgcolor="rgba(0,0,0,0)"),
         )
         st.markdown('<div class="rbi-label" style="margin-bottom:4px;">PRIORITY SPLIT</div>',
                     unsafe_allow_html=True)
@@ -211,17 +218,19 @@ def _render_gaps(gap_df, file_names):
     with ch2:
         CHART_FONT, GRID_COLOR, PIE_LINE = _chart_settings()
         file_gap = gap_df.groupby(["_source_label", "_status"]).size().reset_index(name="Count")
+        status_order = [s for s in ["Not Compliant", "Partially Compliant"] if s in file_gap["_status"].values]
         fig_bar = px.bar(
             file_gap, x="_source_label", y="Count", color="_status",
             barmode="stack", color_discrete_map=COLORS,
             labels={"_source_label": "Annex", "_status": "Status"},
+            category_orders={"_status": status_order},
         )
         fig_bar.update_layout(
-            height=250, margin=dict(t=10, b=60, l=10, r=10),
+            height=260, margin=dict(t=10, b=65, l=10, r=10),
             paper_bgcolor=CHART_BG, font=CHART_FONT,
-            legend=dict(orientation="h", y=-0.42, font=dict(size=10), bgcolor="rgba(0,0,0,0)"),
+            legend=dict(orientation="h", y=-0.46, font=dict(size=10), bgcolor="rgba(0,0,0,0)"),
             xaxis=dict(tickangle=-20, showgrid=False, title=""),
-            yaxis=dict(gridcolor=GRID_COLOR, title=""),
+            yaxis=dict(gridcolor=GRID_COLOR, title="Gaps"),
             bargap=0.35,
         )
         fig_bar.update_traces(marker_line_width=0)
@@ -229,27 +238,72 @@ def _render_gaps(gap_df, file_names):
                     unsafe_allow_html=True)
         st.plotly_chart(fig_bar, use_container_width=True)
 
-    # ── Section bar ────────────────────────────────────────────
+    with ch3:
+        # Gap rate per annex — horizontal bar showing % of controls that are gaps
+        CHART_FONT, GRID_COLOR, PIE_LINE = _chart_settings()
+        annex_totals = gap_df.groupby("_source_label").size().reset_index(name="Gaps")
+        annex_totals = annex_totals.sort_values("Gaps", ascending=True)
+        bar_colors   = ["#ef4444" if g > 10 else "#f59e0b" if g > 5 else "#64748b"
+                        for g in annex_totals["Gaps"]]
+        fig_h = go.Figure(go.Bar(
+            x=annex_totals["Gaps"],
+            y=annex_totals["_source_label"],
+            orientation="h",
+            marker_color=bar_colors,
+            text=annex_totals["Gaps"].astype(str),
+            textposition="outside",
+            hovertemplate="<b>%{y}</b>: %{x} gaps<extra></extra>",
+        ))
+        fig_h.update_layout(
+            height=260, margin=dict(t=10, b=10, l=10, r=40),
+            paper_bgcolor=CHART_BG, font=CHART_FONT,
+            xaxis=dict(showgrid=True, gridcolor=GRID_COLOR, title="Total Gaps"),
+            yaxis=dict(showgrid=False),
+            bargap=0.35,
+        )
+        st.markdown('<div class="rbi-label" style="margin-bottom:4px;">GAP COUNT PER ANNEX</div>',
+                    unsafe_allow_html=True)
+        st.plotly_chart(fig_h, use_container_width=True)
+
+    # ── Section breakdown with compliance line ──────────────────
     sec_col = find_col(gap_df, "section")
     if sec_col:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown('<div class="rbi-section-title">Gaps by Section</div>', unsafe_allow_html=True)
-        sec_gap = gap_df.groupby([sec_col, "_status"]).size().reset_index(name="Count")
+        st.markdown(
+            '<div class="rbi-section-title">Gaps by Section'
+            '<span style="font-size:10px;color:var(--text-dim);font-weight:400;margin-left:8px;">'
+            '— grouped by status</span></div>',
+            unsafe_allow_html=True,
+        )
+        gap_df_sec = gap_df.copy()
+        gap_df_sec["_sec_short"] = gap_df_sec[sec_col].astype(str).str.slice(0, 28)
+        sec_gap = gap_df_sec.groupby(["_sec_short", "_status"]).size().reset_index(name="Count")
         CHART_FONT, GRID_COLOR, PIE_LINE = _chart_settings()
+
+        # Add total per section for a line overlay
+        sec_totals = sec_gap.groupby("_sec_short")["Count"].sum().reset_index(name="Total")
         fig_sec = px.bar(
-            sec_gap, x=sec_col, y="Count", color="_status",
+            sec_gap, x="_sec_short", y="Count", color="_status",
             barmode="group", color_discrete_map=COLORS,
-            labels={sec_col: "Section", "_status": "Status"},
+            labels={"_sec_short": "Section", "_status": "Status", "Count": "Gaps"},
+        )
+        fig_sec.add_scatter(
+            x=sec_totals["_sec_short"], y=sec_totals["Total"],
+            mode="lines+markers", name="Total Gaps",
+            yaxis="y",
+            line=dict(color="#c9a84c", width=2, dash="dot"),
+            marker=dict(size=7, color="#c9a84c", symbol="diamond"),
+            hovertemplate="Total: %{y}<extra></extra>",
         )
         fig_sec.update_layout(
-            height=290, margin=dict(t=10, b=80, l=10, r=10),
+            height=310, margin=dict(t=10, b=90, l=10, r=10),
             paper_bgcolor=CHART_BG, font=CHART_FONT,
-            legend=dict(orientation="h", y=-0.45, font=dict(size=10), bgcolor="rgba(0,0,0,0)"),
+            legend=dict(orientation="h", y=-0.50, font=dict(size=10), bgcolor="rgba(0,0,0,0)"),
             xaxis=dict(tickangle=-30, showgrid=False),
-            yaxis=dict(gridcolor=GRID_COLOR, title=""),
+            yaxis=dict(gridcolor=GRID_COLOR, title="Gaps"),
             bargap=0.3,
         )
-        fig_sec.update_traces(marker_line_width=0)
+        fig_sec.update_traces(marker_line_width=0, selector=dict(type="bar"))
         st.plotly_chart(fig_sec, use_container_width=True)
 
     # ── Filters + Gap Register ─────────────────────────────────
@@ -327,13 +381,12 @@ def _render_gaps(gap_df, file_names):
 
 
 def show_module4():
-    st.markdown(
-        '<div class="rbi-page-header">'
-        '<h1>&#9888;&#65039; MODULE 4 — GAP ANALYSIS</h1>'
-        '<p>Identify and prioritize compliance gaps requiring remediation across all annexes</p>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("""
+    <div class="rbi-page-header">
+        <h1>⚠️ MODULE 4 — GAP ANALYSIS</h1>
+        <p>Identify and prioritize compliance gaps requiring remediation across all annexes</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     level = st.session_state.get("bank_level", "")
     if level == "Level-IV":
@@ -380,12 +433,18 @@ def show_module4():
         df = pd.read_excel(file, engine="openpyxl", header=2)
         df.columns = df.columns.astype(str).str.strip()
         impl_col = find_col(df, CONTROL_COL)
-        if not impl_col:
+        req_col  = find_col(df, "requirement")
+        if not impl_col or not req_col:
             continue
+        # Keep only rows with an actual Requirement text (real control rows)
+        df = df[
+            df[req_col].notna() &
+            (df[req_col].astype(str).str.strip().str.lower() != "nan") &
+            (df[req_col].astype(str).str.strip() != "")
+        ].copy()
         df["_status"] = df[impl_col].apply(
-            lambda v: STATUS_NORM.get(str(v).strip().lower(), None)
+            lambda v: STATUS_NORM.get(str(v).strip().lower(), "Not Assessed")
         )
-        df = df[df["_status"].notna()].copy()
         df["_source"]       = file.name
         df["_source_label"] = _clean_label(file.name)
         all_rows.append(df)

@@ -2,8 +2,6 @@ import streamlit as st
 import streamlit.components.v1 as components
 import os
 
-# Each entry lists multiple possible filenames (spaces, dashes, underscores)
-# The app will try each one and use the first that exists on disk
 TEMPLATES = {
     "basic": {
         "files":    [
@@ -16,7 +14,7 @@ TEMPLATES = {
         "title":    "Basic Cybersecurity Framework",
         "tag":      "MANDATORY - ALL LEVELS",
         "desc":     "Core controls applicable to every UCB. Covers governance, access control, patch management, incident response and more.",
-        "controls": "49",
+        "controls": "48",
         "card_cls": "rbi-card-gold",
         "badge":    "badge-gold",
         "color":    "var(--gold)",
@@ -35,7 +33,7 @@ TEMPLATES = {
         "title":    "Annex I - Baseline Controls",
         "tag":      "MANDATORY - ALL LEVELS",
         "desc":     "Baseline controls for all UCBs. Covers governance, privileged access, encryption, secure disposal and incident reporting to RBI.",
-        "controls": "13",
+        "controls": "12",
         "card_cls": "rbi-card-gold",
         "badge":    "badge-blue",
         "color":    "#4fc3f7",
@@ -54,7 +52,7 @@ TEMPLATES = {
         "title":    "Annex II - Advanced Controls",
         "tag":      "LEVEL-II, III and IV",
         "desc":     "Controls for UCBs with digital channels or CPS sub-membership. Covers DLP, Anti-Phishing, WAF, SIEM, API security and Two-Factor Authentication.",
-        "controls": "24",
+        "controls": "23",
         "card_cls": "rbi-card-amber",
         "badge":    "badge-amber",
         "color":    "#f59e0b",
@@ -72,7 +70,7 @@ TEMPLATES = {
         "title":    "Annex III - Enhanced Controls",
         "tag":      "LEVEL-III and IV ONLY",
         "desc":     "Advanced controls for UCBs with direct CPS membership, own ATM switch or SWIFT interface.",
-        "controls": "26",
+        "controls": "25",
         "card_cls": "rbi-card-red",
         "badge":    "badge-red",
         "color":    "#ef4444",
@@ -89,7 +87,7 @@ TEMPLATES = {
         "title":    "Annex IV - C-SOC and IT Governance",
         "tag":      "LEVEL-IV ONLY",
         "desc":     "Mandatory for UCBs hosting Data Centres or providing software support. Covers C-SOC setup, CISO appointment, and Board-level IT governance.",
-        "controls": "15",
+        "controls": "14",
         "card_cls": "rbi-card-blue",
         "badge":    "badge-purple",
         "color":    "#a855f7",
@@ -111,12 +109,19 @@ LEVEL_COLORS = {
 }
 
 
+def _log(event_type, action, detail=""):
+    try:
+        from module7_audit import log_event
+        log_event(event_type, action, detail, module="module2")
+    except Exception:
+        pass
+
+
 def get_base():
     return st.session_state.get("BASE_DIR", os.getcwd())
 
 
 def find_file(key):
-    """Try every known filename variant and return the first that exists, plus its name."""
     base = get_base()
     for fname in TEMPLATES[key]["files"]:
         path = os.path.join(base, fname)
@@ -126,9 +131,9 @@ def find_file(key):
 
 
 def _template_card(key):
-    t          = TEMPLATES[key]
+    t = TEMPLATES[key]
     filepath, found_name = find_file(key)
-    exists     = filepath is not None
+    exists = filepath is not None
 
     html = (
         '<div class="rbi-card ' + t["card_cls"] + '" style="min-height:185px;">'
@@ -136,31 +141,36 @@ def _template_card(key):
         '<div style="flex:1;min-width:0;">'
         '<div style="font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;'
         'color:var(--text-primary);line-height:1.25;">' + t["title"] + '</div>'
-        '<span class="rbi-badge ' + t["badge"] + '" style="margin-top:7px;display:inline-block;">' + t["tag"] + '</span>'
+        '<span class="rbi-badge ' + t["badge"] + '" style="margin-top:7px;display:inline-block;">'
+        + t["tag"] + '</span>'
         '</div>'
         '<div style="text-align:right;flex-shrink:0;margin-left:14px;">'
-        '<div style="font-family:Rajdhani,sans-serif;font-size:34px;font-weight:700;color:' + t["color"] + ';line-height:1;">' + t["controls"] + '</div>'
-        '<div style="font-size:9px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-top:2px;">controls</div>'
+        '<div style="font-family:Rajdhani,sans-serif;font-size:34px;font-weight:700;color:'
+        + t["color"] + ';line-height:1;">' + t["controls"] + '</div>'
+        '<div style="font-size:9px;color:var(--text-dim);letter-spacing:1px;'
+        'text-transform:uppercase;margin-top:2px;">controls</div>'
         '</div></div>'
-        '<p style="color:var(--text-secondary);font-size:12px;margin:0 0 6px 0;line-height:1.65;">' + t["desc"] + '</p></div>'
+        '<p style="color:var(--text-secondary);font-size:12px;margin:0 0 6px 0;line-height:1.65;">'
+        + t["desc"] + '</p></div>'
     )
     st.markdown(html, unsafe_allow_html=True)
 
     if exists:
         with open(filepath, "rb") as f:
-            st.download_button(
-                "Download  " + t["title"],
-                data=f.read(),
-                file_name=t["download"],
-                use_container_width=True,
-                key="dl_" + key,
-            )
+            data = f.read()
+        if st.download_button(
+            "⬇️  Download  " + t["title"],
+            data=data,
+            file_name=t["download"],
+            use_container_width=True,
+            key="dl_" + key,
+        ):
+            _log("export", f"Template downloaded: {t['title']}", detail=t["download"])
     else:
-        # Show all tried names to help user rename their file
         tried = ", ".join(t["files"][:3])
         st.error(
-            "File not found. Please rename your Excel file to: **" + t["files"][0] + "**  "
-            "(tried: " + tried + " ...)"
+            "File not found. Rename your Excel file to: **" + t["files"][0] + "**  "
+            "(tried: " + tried + " …)"
         )
 
 
@@ -173,8 +183,8 @@ def _instructions_html(n_tmpl, level, is_light):
     annex4 = ""
     if level == "Level-IV":
         annex4 = (
-            '<li>For <strong style="color:' + purp + ';">Annex IV</strong>' +
-            ' - C-SOC must be set up, CISO appointed, and Board-level IT committees' +
+            '<li>For <strong style="color:' + purp + ';">Annex IV</strong>'
+            ' — C-SOC must be set up, CISO appointed, and Board-level IT committees'
             ' formed before completing the checklist.</li>'
         )
 
@@ -191,7 +201,7 @@ def _instructions_html(n_tmpl, level, is_light):
 
     items = (
         '<li>Download all <span class="g">' + str(n_tmpl) + ' template(s)</span> above</li>'
-        '<li>Fill the <span class="g">Control Implemented?</span> column - '
+        '<li>Fill the <span class="g">Control Implemented?</span> column — '
         'Fully Implemented / Partially Implemented / No / Not Applicable</li>'
         '<li>Add observations and supporting artefacts in the respective columns</li>'
         + annex4 +
@@ -212,15 +222,22 @@ def _instructions_html(n_tmpl, level, is_light):
 def show_module2():
     st.markdown(
         '<div class="rbi-page-header">'
-        '<h1>&#128229; MODULE 2 - DOWNLOAD TEMPLATES</h1>'
+        '<h1>&#128229; MODULE 2 — DOWNLOAD TEMPLATES</h1>'
         '<p>Download the control assessment templates applicable to your bank compliance tier</p>'
         '</div>',
         unsafe_allow_html=True,
     )
 
+    # ── Ensure bank profile is persisted whenever this page is visited ────────
+    # This fixes the bug where navigating to Module 2 and back loses Module 1 data
+    _persist_bank_profile()
+
     level = st.session_state.get("bank_level")
     if not level:
-        st.warning("Please complete Module 1 first to identify your compliance level.")
+        st.warning("⚠️  Please complete Module 1 first to identify your compliance level.")
+        if st.button("→ Go to Module 1 (Level Identification)", key="m2_goto_m1"):
+            st.session_state["active_module"] = 0
+            st.rerun()
         return
 
     bank_name  = st.session_state.get("bank_name", "Your Bank")
@@ -228,48 +245,69 @@ def show_module2():
     lc         = LEVEL_COLORS.get(level, "var(--gold)")
     total_ctrl = sum(int(TEMPLATES[k]["controls"]) for k in applicable)
 
-    # Stats strip
-    st.markdown(
-        '<div class="rbi-stat-strip" style="margin-bottom:22px;">'
-        '<div class="rbi-stat-item"><div class="stat-label">Bank</div>'
-        '<div style="font-family:Rajdhani,sans-serif;font-size:15px;color:var(--text-primary);font-weight:600;">' + bank_name + '</div></div>'
-        '<div class="rbi-stat-item"><div class="stat-label">Compliance Tier</div>'
-        '<div style="font-family:Rajdhani,sans-serif;font-size:22px;color:' + lc + ';font-weight:700;">' + level + '</div></div>'
-        '<div class="rbi-stat-item"><div class="stat-label">Total Controls</div>'
-        '<div class="stat-value">' + str(total_ctrl) + '</div></div>'
-        '<div class="rbi-stat-item"><div class="stat-label">Templates</div>'
-        '<div class="stat-value" style="color:' + lc + ';">' + str(len(applicable)) + '</div></div>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
+    _log("view", f"Templates page viewed — {level}", detail=bank_name)
+
+    # ── Stats strip ────────────────────────────────────────────
+    level_badge_cls = {
+        "Level-I": "badge-blue", "Level-II": "badge-amber",
+        "Level-III": "badge-red", "Level-IV": "badge-purple",
+    }.get(level, "badge-gold")
+
+    st.markdown(f"""
+    <div class="rbi-stat-strip" style="margin-bottom:22px;">
+        <div class="rbi-stat-item">
+            <div class="stat-label">Bank</div>
+            <div style="font-family:Rajdhani,sans-serif;font-size:15px;
+                        color:var(--text-primary);font-weight:600;
+                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+                        max-width:160px;" title="{bank_name}">{bank_name}</div>
+        </div>
+        <div class="rbi-stat-item">
+            <div class="stat-label">Compliance Tier</div>
+            <div style="font-family:Rajdhani,sans-serif;font-size:22px;
+                        color:{lc};font-weight:700;">{level}</div>
+        </div>
+        <div class="rbi-stat-item">
+            <div class="stat-label">Total Controls</div>
+            <div class="stat-value">{total_ctrl}</div>
+        </div>
+        <div class="rbi-stat-item">
+            <div class="stat-label">Templates Required</div>
+            <div class="stat-value" style="color:{lc};">{len(applicable)}</div>
+        </div>
+        <div class="rbi-stat-item">
+            <div class="stat-label">Status</div>
+            <div style="margin-top:4px;">
+                <span class="rbi-badge {level_badge_cls}">LEVEL CONFIRMED</span>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown('<div class="rbi-section-title">Applicable Templates</div>', unsafe_allow_html=True)
 
-    # Show all actual filenames found on disk (debug helper)
+    # Missing files warning
     base = get_base()
-    found_files = []
     missing_files = []
     for k in applicable:
         fp, fn = find_file(k)
-        if fp:
-            found_files.append(fn)
-        else:
+        if not fp:
             missing_files.append(TEMPLATES[k]["files"][0])
-
     if missing_files:
         st.warning(
-            "Some Excel files were not found. Please rename your files exactly as shown below and "
-            "place them in: **" + base + "**"
+            "Some Excel files were not found. Place them in: **" + base + "**"
         )
         for mf in missing_files:
             st.code(mf)
 
-    # Row 1 - Basic + Annex I
+    # Row 1 — Basic + Annex I (always shown)
     c1, c2 = st.columns(2)
-    with c1: _template_card("basic")
-    with c2: _template_card("annex1")
+    with c1:
+        _template_card("basic")
+    with c2:
+        _template_card("annex1")
 
-    # Row 2 - Annex II + III
+    # Row 2 — Annex II + III
     if level in ["Level-II", "Level-III", "Level-IV"]:
         c3, c4 = st.columns(2)
         with c3:
@@ -279,15 +317,16 @@ def show_module2():
                 _template_card("annex3")
             else:
                 st.markdown(
-                    '<div class="rbi-card" style="min-height:185px;display:flex;align-items:center;'
-                    'justify-content:center;flex-direction:column;gap:10px;opacity:0.35;border-style:dashed;">'
-                    '<div style="font-size:28px;">&#128274;</div>'
+                    '<div class="rbi-card" style="min-height:185px;display:flex;'
+                    'align-items:center;justify-content:center;flex-direction:column;'
+                    'gap:10px;opacity:0.35;border-style:dashed;">'
+                    '<div style="font-size:28px;">🔒</div>'
                     '<div style="font-size:12px;color:var(--text-dim);text-align:center;">'
                     'Annex III not required<br>for Level-II banks</div></div>',
                     unsafe_allow_html=True,
                 )
 
-    # Row 3 - Annex IV
+    # Row 3 — Annex IV
     if level == "Level-IV":
         c5, c6 = st.columns(2)
         with c5:
@@ -296,7 +335,7 @@ def show_module2():
             st.markdown(
                 '<div class="rbi-card rbi-card-blue" style="min-height:185px;display:flex;'
                 'align-items:center;justify-content:center;flex-direction:column;gap:12px;">'
-                '<div style="font-size:36px;">&#127942;</div>'
+                '<div style="font-size:36px;">🏆</div>'
                 '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;'
                 'color:var(--text-primary);text-align:center;">Full Framework Applied</div>'
                 '<div style="font-size:11.5px;color:var(--text-dim);text-align:center;line-height:1.7;">'
@@ -305,9 +344,41 @@ def show_module2():
                 unsafe_allow_html=True,
             )
 
-    # Instructions - uses components.html so no raw tags ever show
+    # ── Instructions ───────────────────────────────────────────
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="rbi-section-title">Instructions</div>', unsafe_allow_html=True)
     is_light = st.session_state.get("theme", "dark") == "light"
     html_src = _instructions_html(len(applicable), level, is_light)
     components.html(html_src, height=(270 if level == "Level-IV" else 235), scrolling=False)
+
+    # ── Next step nudge ────────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="rbi-card" style="padding:14px 20px;display:flex;
+         align-items:center;gap:14px;border-left:3px solid var(--gold);">
+        <div style="font-size:20px;">💡</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">
+            After filling all <strong style="color:var(--gold);">{total_ctrl} controls</strong>
+            in your {len(applicable)} template(s), go to
+            <strong>Module 3</strong> (Compliance Dashboard) to upload and analyse your results.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def _persist_bank_profile():
+    """
+    Ensure the bank profile is saved to DB whenever Module 2 is visited.
+    This prevents data loss when users navigate away from Module 1
+    before the auto-save fires.
+    """
+    uid   = st.session_state.get("user_id")
+    bank  = st.session_state.get("bank_name", "")
+    level = st.session_state.get("bank_level", "")
+    flags = st.session_state.get("module1_flags", {})
+    if uid and (bank or level):
+        try:
+            from db_store import save_bank_profile
+            save_bank_profile(uid, bank, level, flags)
+        except Exception:
+            pass

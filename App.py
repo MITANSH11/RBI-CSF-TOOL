@@ -55,19 +55,22 @@ import module7_audit as _m7
 _orig_log = _m7.log_event
 
 def _db_log(event_type, action, detail="", module="app"):
+    # Record length BEFORE calling original (which handles dedup internally)
+    before = len(st.session_state.get("audit_log", []))
     _orig_log(event_type, action, detail, module)
-    uid = st.session_state.get("user_id")
-    if uid:
-        try:
-            from db_store import save_audit_event
-            from datetime import datetime
-            save_audit_event(uid, {
-                "timestamp": datetime.now().strftime("%d %b %Y  %H:%M:%S"),
-                "type": event_type, "action": action,
-                "detail": detail, "module": module,
-            })
-        except Exception:
-            pass
+    after  = len(st.session_state.get("audit_log", []))
+
+    # Only write to DB if a new entry was actually appended (dedup may have skipped it)
+    if after > before:
+        uid = st.session_state.get("user_id")
+        if uid:
+            try:
+                from db_store import save_audit_event
+                # Use the entry that was just appended
+                entry = st.session_state["audit_log"][-1]
+                save_audit_event(uid, entry)
+            except Exception:
+                pass
 
 _m7.log_event = _db_log
 from module7_audit import log_event
@@ -267,6 +270,42 @@ if st.session_state.get("bank_level"):                completed.append(1)
 if st.session_state.get("compliance_summary"):         completed.append(3)
 if st.session_state.get("gap_dataframe") is not None: completed.append(4)
 if any(v for v in st.session_state.get("evidence_store",{}).values()): completed.append(8)
+
+# ── Protect bank_level from being lost when Module 1 widgets are not rendered ─
+# Streamlit clears widget keys (m1_cps_sub etc.) when Module 1 is not the active page.
+# If module1_flags has a saved level, use it as the authoritative source whenever
+# the current bank_level is missing or has been reset to a lower tier unexpectedly.
+_saved_flags = st.session_state.get("module1_flags", {})
+_computed_from_flags = None
+if _saved_flags:
+    _f_cps_sub    = _saved_flags.get("m1_cps_sub", False)
+    _f_cps_direct = _saved_flags.get("m1_cps_direct", False)
+    _f_internet   = _saved_flags.get("m1_internet", False)
+    _f_mobile     = _saved_flags.get("m1_mobile", False)
+    _f_cts        = _saved_flags.get("m1_cts", False)
+    _f_atm        = _saved_flags.get("m1_atm", False)
+    _f_swift      = _saved_flags.get("m1_swift", False)
+    _f_dc         = _saved_flags.get("m1_dc", False)
+    _f_digital    = _f_internet or _f_mobile or _f_cts
+    _f_cps_any    = _f_cps_sub or _f_cps_direct
+    if _f_cps_any and ((_f_atm and _f_swift) or _f_dc):
+        _computed_from_flags = "Level-IV"
+    elif _f_cps_direct or _f_atm or _f_swift:
+        _computed_from_flags = "Level-III"
+    elif _f_cps_sub and _f_digital:
+        _computed_from_flags = "Level-II"
+    else:
+        _computed_from_flags = "Level-I"
+
+# If session bank_level is missing or was reset to Level-I while flags say otherwise,
+# restore from flags
+_session_level = st.session_state.get("bank_level", "")
+if _computed_from_flags and (
+    not _session_level or
+    (_session_level == "Level-I" and _computed_from_flags != "Level-I")
+):
+    st.session_state["bank_level"] = _computed_from_flags
+    st.session_state["bank_name"]  = _saved_flags.get("bank_name", st.session_state.get("bank_name", ""))
 
 summary   = st.session_state.get("compliance_summary")
 score_pct = summary["percent"] if summary else None

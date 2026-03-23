@@ -1,12 +1,9 @@
 /* ════════════════════════════════════════════════════════════
-   RBI CSF Compliance Tool  —  style.css
-   Clean, professional cybersecurity compliance UI
+   RBI CSF Compliance Tool  —  style.css  v2.0
    ════════════════════════════════════════════════════════════ */
 
-/* ── Google Fonts ─────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
-/* ── Global Reset ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body, [data-testid="stAppViewContainer"] {
@@ -14,216 +11,206 @@ html, body, [data-testid="stAppViewContainer"] {
     -webkit-font-smoothing: antialiased;
 }
 
-/* ── Main container padding ───────────────────────────────── */
 .block-container {
-    padding: 1.6rem 2.2rem 3rem !important;
-    max-width: 1280px !important;
+    padding: 1.8rem 2.4rem 3.5rem !important;
+    max-width: 1320px !important;
 }
 
-/* ── Streamlit default element cleanup ────────────────────── */
 .stDeployButton { display: none !important; }
 #MainMenu        { display: none !important; }
 footer           { display: none !important; }
 .stDecoration    { display: none !important; }
 
-/* ══════════════════════════════════════════════════════════
-   PAGE HEADER
-   ══════════════════════════════════════════════════════════ */
+/* PAGE HEADER */
 .rbi-page-header {
-    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30,58,110,0.12) 100%);
+    background: var(--bg-card);
     border: 1px solid var(--border);
     border-left: 4px solid var(--gold);
-    border-radius: 16px;
+    border-radius: 14px;
     padding: 22px 28px;
-    margin-bottom: 24px;
+    margin-bottom: 26px;
     position: relative;
     overflow: hidden;
 }
-.rbi-page-header::before {
+.rbi-page-header::after {
     content: '';
     position: absolute;
-    top: -40px; right: -40px;
-    width: 160px; height: 160px;
-    background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+    top: 0; right: 0;
+    width: 200px; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.03));
     pointer-events: none;
 }
 .rbi-page-header h1 {
     font-family: 'Rajdhani', sans-serif;
-    font-size: 22px;
+    font-size: 19px;
     font-weight: 700;
-    letter-spacing: 1.2px;
+    letter-spacing: 1.5px;
     color: var(--text-primary);
-    margin: 0 0 6px 0;
-    line-height: 1.2;
+    margin: 0 0 4px 0;
+    line-height: 1.25;
+    text-transform: uppercase;
 }
 .rbi-page-header p {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-secondary);
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
-/* ══════════════════════════════════════════════════════════
-   CARDS
-   ══════════════════════════════════════════════════════════ */
+/* CARDS */
 .rbi-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 12px;
     padding: 18px 20px;
-    margin-bottom: 14px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 12px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
 }
 .rbi-card:hover {
     border-color: var(--border-glow);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+    transform: translateY(-1px);
 }
-.rbi-card-gold  { border-left: 3px solid var(--gold); }
-.rbi-card-amber { border-left: 3px solid #f59e0b; }
-.rbi-card-red   { border-left: 3px solid #ef4444; }
-.rbi-card-blue  { border-left: 3px solid #a855f7; }
-.rbi-card-green { border-left: 3px solid #22c55e; }
+.rbi-card-gold   { border-left: 3px solid var(--gold); }
+.rbi-card-amber  { border-left: 3px solid #f59e0b; }
+.rbi-card-red    { border-left: 3px solid #ef4444; }
+.rbi-card-blue   { border-left: 3px solid #a855f7; }
+.rbi-card-green  { border-left: 3px solid #22c55e; }
 
-/* ══════════════════════════════════════════════════════════
-   BADGES / PILLS
-   ══════════════════════════════════════════════════════════ */
+/* BADGES */
 .rbi-badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 10px;
+    padding: 2px 8px;
     border-radius: 100px;
-    font-size: 9.5px;
+    font-size: 9px;
     font-weight: 700;
-    letter-spacing: 0.9px;
+    letter-spacing: 0.7px;
     text-transform: uppercase;
     white-space: nowrap;
-    line-height: 1.8;
+    line-height: 1.9;
 }
-.badge-gold   { background: rgba(201,168,76,0.12);  color: var(--gold);   border: 1px solid rgba(201,168,76,0.25); }
-.badge-blue   { background: rgba(79,195,247,0.10);  color: #4fc3f7;       border: 1px solid rgba(79,195,247,0.25); }
-.badge-amber  { background: rgba(245,158,11,0.10);  color: #f59e0b;       border: 1px solid rgba(245,158,11,0.25); }
-.badge-red    { background: rgba(239,68,68,0.10);   color: #ef4444;       border: 1px solid rgba(239,68,68,0.25); }
-.badge-green  { background: rgba(34,197,94,0.10);   color: #22c55e;       border: 1px solid rgba(34,197,94,0.25); }
-.badge-purple { background: rgba(168,85,247,0.10);  color: #a855f7;       border: 1px solid rgba(168,85,247,0.25); }
-.badge-grey   { background: rgba(100,116,139,0.10); color: #94a3b8;       border: 1px solid rgba(100,116,139,0.20); }
+.badge-gold    { background: rgba(201,168,76,0.11);  color: var(--gold);    border: 1px solid rgba(201,168,76,0.22); }
+.badge-blue    { background: rgba(79,195,247,0.09);  color: #4fc3f7;        border: 1px solid rgba(79,195,247,0.22); }
+.badge-amber   { background: rgba(245,158,11,0.09);  color: #f59e0b;        border: 1px solid rgba(245,158,11,0.22); }
+.badge-red     { background: rgba(239,68,68,0.09);   color: #ef4444;        border: 1px solid rgba(239,68,68,0.22); }
+.badge-green   { background: rgba(34,197,94,0.09);   color: #22c55e;        border: 1px solid rgba(34,197,94,0.22); }
+.badge-purple  { background: rgba(168,85,247,0.09);  color: #a855f7;        border: 1px solid rgba(168,85,247,0.22); }
+.badge-grey    { background: rgba(100,116,139,0.09); color: #94a3b8;        border: 1px solid rgba(100,116,139,0.18); }
 
-/* ══════════════════════════════════════════════════════════
-   STAT STRIP
-   ══════════════════════════════════════════════════════════ */
+/* STAT STRIP */
 .rbi-stat-strip {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 20px;
+    border-radius: 12px;
+    padding: 0;
     display: flex;
-    align-items: center;
-    gap: 0;
+    align-items: stretch;
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
     overflow: hidden;
 }
 .rbi-stat-item {
     flex: 1;
-    min-width: 90px;
-    padding: 6px 16px;
+    min-width: 80px;
+    padding: 16px 16px;
     border-right: 1px solid var(--border);
     text-align: center;
+    transition: background 0.14s;
 }
 .rbi-stat-item:last-child { border-right: none; }
+.rbi-stat-item:hover { background: var(--bg-card-hover); }
 .stat-label {
-    font-size: 9.5px;
-    font-weight: 600;
+    font-size: 9px;
+    font-weight: 700;
     color: var(--text-dim);
     letter-spacing: 0.9px;
     text-transform: uppercase;
     margin-bottom: 5px;
+    display: block;
 }
 .stat-value {
     font-family: 'Rajdhani', sans-serif;
     font-size: 26px;
     font-weight: 700;
     color: var(--gold);
-    line-height: 1.1;
+    line-height: 1;
+    display: block;
 }
 
-/* ══════════════════════════════════════════════════════════
-   SECTION TITLES & LABELS
-   ══════════════════════════════════════════════════════════ */
+/* SECTION TITLES */
 .rbi-section-title {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 13px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 10.5px;
     font-weight: 700;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.6px;
     text-transform: uppercase;
     color: var(--text-dim);
-    margin: 20px 0 12px 0;
+    margin: 22px 0 13px 0;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
 }
 .rbi-section-title::before {
     content: '';
     display: inline-block;
     width: 3px;
-    height: 14px;
-    background: var(--gold);
+    height: 11px;
+    background: linear-gradient(180deg, var(--gold), var(--gold-light));
     border-radius: 2px;
+    flex-shrink: 0;
 }
 .rbi-label {
-    font-size: 9.5px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
     color: var(--text-dim);
 }
 
-/* ══════════════════════════════════════════════════════════
-   SIDEBAR
-   ══════════════════════════════════════════════════════════ */
+/* SIDEBAR */
 section[data-testid="stSidebar"] {
-    min-width: 272px !important;
-    max-width: 272px !important;
+    min-width: 268px !important;
+    max-width: 268px !important;
 }
 section[data-testid="stSidebar"] > div {
-    padding: 16px 14px !important;
+    padding: 16px 13px !important;
 }
 .sidebar-bank-card {
-    background: var(--bg-card);
+    background: var(--bg-base);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 14px;
-    margin-bottom: 4px;
+    border-radius: 10px;
+    padding: 12px 13px;
+    margin-bottom: 6px;
 }
 .sidebar-section-label {
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 700;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.6px;
     text-transform: uppercase;
     color: var(--text-dim);
-    margin-bottom: 8px;
+    margin-bottom: 7px;
     padding-left: 2px;
 }
 .sidebar-footer {
     font-size: 9px;
     text-align: center;
-    line-height: 1.6;
+    line-height: 1.65;
     color: var(--text-dim);
-    letter-spacing: 0.3px;
 }
 
-/* ── Step Indicator ─────────────────────────────────────── */
+/* STEP INDICATORS */
 .step-indicator {
     font-size: 11.5px;
     color: var(--text-dim);
-    padding: 5px 8px 5px 12px;
-    border-radius: 8px;
-    margin-bottom: 3px;
+    padding: 5px 8px 5px 10px;
+    border-radius: 7px;
+    margin-bottom: 2px;
     border-left: 2px solid transparent;
-    transition: all 0.15s ease;
+    transition: all 0.13s ease;
     line-height: 1.4;
-    letter-spacing: 0.2px;
 }
 .step-indicator.active {
     color: var(--gold);
@@ -233,47 +220,43 @@ section[data-testid="stSidebar"] > div {
 }
 .step-indicator.done {
     color: var(--compliant);
-    background: rgba(34,197,94,0.06);
+    background: rgba(34,197,94,0.05);
     border-left-color: var(--compliant);
 }
 
-/* ══════════════════════════════════════════════════════════
-   BUTTONS
-   ══════════════════════════════════════════════════════════ */
+/* BUTTONS */
 .stButton > button,
 .stDownloadButton > button {
     font-family: 'IBM Plex Sans', sans-serif !important;
     font-weight: 500 !important;
-    font-size: 13px !important;
-    border-radius: 10px !important;
-    padding: 9px 18px !important;
-    transition: all 0.18s ease !important;
+    font-size: 12.5px !important;
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    transition: all 0.15s ease !important;
     letter-spacing: 0.2px !important;
     cursor: pointer !important;
 }
 .stDownloadButton > button {
     width: 100% !important;
     background: var(--gold-dim) !important;
-    border: 1px solid rgba(201,168,76,0.30) !important;
+    border: 1px solid rgba(201,168,76,0.28) !important;
     color: var(--gold) !important;
-    margin-top: 6px !important;
+    margin-top: 5px !important;
 }
 .stDownloadButton > button:hover {
-    background: rgba(201,168,76,0.18) !important;
+    background: rgba(201,168,76,0.15) !important;
     border-color: var(--gold) !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 4px 14px rgba(201,168,76,0.15) !important;
+    box-shadow: 0 3px 10px rgba(201,168,76,0.10) !important;
 }
-
-/* ── Sign Out / Theme toggle ────────────────────────────── */
 section[data-testid="stSidebar"] .stButton > button {
     width: 100% !important;
-    border-radius: 10px !important;
-    background: var(--bg-card) !important;
+    border-radius: 8px !important;
+    background: transparent !important;
     border: 1px solid var(--border) !important;
     color: var(--text-secondary) !important;
-    font-size: 12px !important;
-    padding: 8px 14px !important;
+    font-size: 11.5px !important;
+    padding: 7px 12px !important;
     margin-bottom: 2px !important;
 }
 section[data-testid="stSidebar"] .stButton > button:hover {
@@ -282,73 +265,57 @@ section[data-testid="stSidebar"] .stButton > button:hover {
     background: var(--gold-dim) !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   FORM INPUTS
-   ══════════════════════════════════════════════════════════ */
+/* INPUTS */
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea {
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     font-family: 'IBM Plex Sans', sans-serif !important;
     font-size: 13px !important;
-    transition: border-color 0.2s ease !important;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease !important;
 }
 .stTextInput > div > div > input:focus,
 .stTextArea > div > div > textarea:focus {
     border-color: var(--gold) !important;
-    box-shadow: 0 0 0 2px rgba(201,168,76,0.12) !important;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.07) !important;
 }
 .stTextInput label, .stTextArea label {
-    font-size: 12px !important;
+    font-size: 11px !important;
     font-weight: 500 !important;
     color: var(--text-secondary) !important;
 }
-
-/* Select / Dropdown ─────────────────────────────────────── */
 [data-baseweb="select"] > div {
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     font-family: 'IBM Plex Sans', sans-serif !important;
     font-size: 13px !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   FILE UPLOADER
-   ══════════════════════════════════════════════════════════ */
+/* FILE UPLOADER */
 [data-testid="stFileUploader"] {
-    border-radius: 14px !important;
-    transition: border-color 0.2s ease !important;
+    border-radius: 10px !important;
+    transition: border-color 0.16s !important;
 }
-[data-testid="stFileUploader"]:hover {
-    border-color: var(--gold) !important;
-}
-[data-testid="stFileUploader"] label {
-    font-size: 13px !important;
-    color: var(--text-secondary) !important;
-}
+[data-testid="stFileUploader"]:hover { border-color: var(--gold) !important; }
+[data-testid="stFileUploader"] label { font-size: 13px !important; }
 
-/* ══════════════════════════════════════════════════════════
-   METRICS
-   ══════════════════════════════════════════════════════════ */
+/* METRICS */
 [data-testid="metric-container"] {
-    border-radius: 14px !important;
-    padding: 16px 18px !important;
+    border-radius: 12px !important;
+    padding: 14px 16px !important;
     border: 1px solid var(--border) !important;
+    transition: border-color 0.16s !important;
 }
+[data-testid="metric-container"]:hover { border-color: var(--border-glow) !important; }
 [data-testid="stMetricLabel"] {
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.5px !important;
+    font-size: 9.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.7px !important;
     text-transform: uppercase !important;
     color: var(--text-dim) !important;
 }
-[data-testid="stMetricDelta"] {
-    font-size: 11px !important;
-}
 
-/* ══════════════════════════════════════════════════════════
-   DATAFRAME / TABLE
-   ══════════════════════════════════════════════════════════ */
+/* DATAFRAME */
 [data-testid="stDataFrame"] {
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     overflow: hidden !important;
     border: 1px solid var(--border) !important;
 }
@@ -357,50 +324,39 @@ section[data-testid="stSidebar"] .stButton > button:hover {
     font-family: 'IBM Plex Sans', sans-serif !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   PROGRESS BAR
-   ══════════════════════════════════════════════════════════ */
+/* PROGRESS */
 .stProgress > div > div {
     border-radius: 100px !important;
-    height: 8px !important;
+    height: 5px !important;
 }
 .stProgress > div > div > div {
     border-radius: 100px !important;
-    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 100%) !important;
-    transition: width 0.4s ease !important;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light)) !important;
+    transition: width 0.45s ease !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   ALERTS / INFO / WARNING / ERROR
-   ══════════════════════════════════════════════════════════ */
+/* ALERTS */
 [data-testid="stAlert"] {
-    border-radius: 12px !important;
-    border-left-width: 4px !important;
-    font-size: 13px !important;
-    font-family: 'IBM Plex Sans', sans-serif !important;
+    border-radius: 10px !important;
+    border-left-width: 3px !important;
+    font-size: 12.5px !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   DIVIDERS
-   ══════════════════════════════════════════════════════════ */
+/* DIVIDERS */
 hr {
     border: none !important;
     border-top: 1px solid var(--border) !important;
-    margin: 14px 0 !important;
+    margin: 11px 0 !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   RADIO BUTTONS (nav)
-   ══════════════════════════════════════════════════════════ */
-section[data-testid="stSidebar"] .stRadio > div {
-    gap: 2px !important;
-}
+/* RADIO NAV */
+section[data-testid="stSidebar"] .stRadio > div { gap: 1px !important; }
 section[data-testid="stSidebar"] .stRadio label {
-    padding: 7px 10px 7px 12px !important;
-    border-radius: 9px !important;
-    font-size: 12.5px !important;
+    padding: 7px 10px 7px 11px !important;
+    border-radius: 7px !important;
+    font-size: 12px !important;
     font-weight: 500 !important;
-    transition: all 0.15s ease !important;
+    transition: all 0.12s ease !important;
     border-left: 2px solid transparent !important;
     cursor: pointer !important;
 }
@@ -416,121 +372,123 @@ section[data-testid="stSidebar"] .stRadio [data-checked="true"] + label {
     font-weight: 600 !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   CHECKBOXES
-   ══════════════════════════════════════════════════════════ */
+/* CHECKBOXES */
 .stCheckbox label {
     font-size: 13px !important;
-    font-weight: 400 !important;
     gap: 8px !important;
     padding: 4px 0 !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   TABS
-   ══════════════════════════════════════════════════════════ */
+/* TABS */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 4px !important;
-    padding: 5px !important;
-    border-radius: 12px !important;
+    gap: 3px !important;
+    padding: 4px !important;
+    border-radius: 10px !important;
 }
 .stTabs [data-baseweb="tab"] {
-    border-radius: 8px !important;
+    border-radius: 7px !important;
     font-family: 'IBM Plex Sans', sans-serif !important;
-    font-size: 12.5px !important;
+    font-size: 12px !important;
     font-weight: 500 !important;
-    padding: 7px 14px !important;
-    transition: all 0.15s ease !important;
+    padding: 6px 13px !important;
+    transition: all 0.12s ease !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   EXPANDER
-   ══════════════════════════════════════════════════════════ */
+/* EXPANDER */
 [data-testid="stExpander"] {
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     border: 1px solid var(--border) !important;
     overflow: hidden !important;
 }
 [data-testid="stExpander"] summary {
-    font-size: 13px !important;
+    font-size: 12px !important;
     font-weight: 600 !important;
-    padding: 12px 16px !important;
+    padding: 11px 14px !important;
     background: var(--bg-card) !important;
 }
-[data-testid="stExpander"] summary:hover {
-    background: var(--bg-card-hover) !important;
+[data-testid="stExpander"] summary:hover { background: var(--bg-card-hover) !important; }
+
+/* CHARTS */
+.js-plotly-plot { border-radius: 10px !important; }
+[data-testid="stPlotlyChart"] { border-radius: 10px !important; overflow: hidden; }
+
+/* AUDIT TIMELINE */
+.audit-timeline { padding: 0 2px; }
+.audit-event {
+    padding: 11px 15px;
+    border-radius: 9px;
+    margin-bottom: 7px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    transition: border-color 0.14s, transform 0.14s;
+    position: relative;
+    overflow: hidden;
 }
+.audit-event::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 8%; bottom: 8%;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+}
+.audit-event:hover { border-color: var(--border-glow); transform: translateX(2px); }
+.event-upload::before  { background: #4fc3f7; }
+.event-export::before  { background: #22c55e; }
+.event-view::before    { background: #f59e0b; }
+.event-change::before  { background: #ef4444; }
+.ae-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.ae-action { font-size: 12.5px; font-weight: 600; color: var(--text-primary); flex: 1; line-height: 1.4; }
+.ae-time   { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); white-space: nowrap; }
 
-/* ══════════════════════════════════════════════════════════
-   SCROLLBARS
-   ══════════════════════════════════════════════════════════ */
-::-webkit-scrollbar       { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gold); }
-
-/* ══════════════════════════════════════════════════════════
-   INSTRUCTIONS CARD (module 2 - no raw HTML)
-   ══════════════════════════════════════════════════════════ */
-.instructions-card {
+/* TREND / HISTORY */
+.trend-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--gold);
-    border-radius: 14px;
-    padding: 20px 24px;
-    margin-top: 12px;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
 }
-.instructions-card ol {
-    margin: 10px 0 0 0;
-    padding-left: 20px;
-    line-height: 2.4;
-    font-size: 13px;
-    color: var(--text-secondary);
+.snapshot-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    margin-bottom: 5px;
+    transition: border-color 0.14s;
+    flex-wrap: wrap;
 }
-.instructions-card ol li {
-    margin-bottom: 2px;
-}
-.instructions-card .inst-highlight {
-    color: var(--gold);
-    font-weight: 600;
-}
+.snapshot-row:hover { border-color: var(--border-glow); }
+.snapshot-date { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); min-width: 128px; }
+.snapshot-score { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; line-height: 1; min-width: 50px; }
 
-/* ══════════════════════════════════════════════════════════
-   COMPLIANCE STATUS PILLS
-   ══════════════════════════════════════════════════════════ */
+/* STATUS */
 .status-compliant    { color: #22c55e; font-weight: 600; }
 .status-partial      { color: #f59e0b; font-weight: 600; }
 .status-noncompliant { color: #ef4444; font-weight: 600; }
 .status-na           { color: #64748b; font-weight: 600; }
 
-/* ══════════════════════════════════════════════════════════
-   PLOTLY CHART CONTAINERS
-   ══════════════════════════════════════════════════════════ */
-.js-plotly-plot {
-    border-radius: 12px !important;
-}
-[data-testid="stPlotlyChart"] {
-    border-radius: 12px !important;
-    overflow: hidden;
-}
+/* SCROLLBARS */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
 
-/* ══════════════════════════════════════════════════════════
-   ANIMATION UTILITIES
-   ══════════════════════════════════════════════════════════ */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
+/* ANIMATIONS */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(7px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-.rbi-card, .rbi-page-header, .rbi-stat-strip {
-    animation: fadeIn 0.25s ease forwards;
-}
+.rbi-card, .rbi-page-header, .rbi-stat-strip { animation: fadeUp 0.2s ease forwards; }
+.audit-event { animation: fadeUp 0.16s ease forwards; }
 
-/* ══════════════════════════════════════════════════════════
-   RESPONSIVE
-   ══════════════════════════════════════════════════════════ */
+/* RESPONSIVE */
 @media (max-width: 768px) {
     .block-container { padding: 1rem 1rem 2rem !important; }
-    .rbi-stat-item   { min-width: 70px; padding: 6px 10px; }
-    .rbi-page-header { padding: 16px 18px; }
-    .rbi-page-header h1 { font-size: 18px; }
+    .rbi-stat-item   { min-width: 70px; padding: 11px 9px; }
+    .rbi-page-header { padding: 14px 16px; }
+    .rbi-page-header h1 { font-size: 16px; }
+    .stat-value { font-size: 22px; }
 }
