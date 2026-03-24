@@ -1,84 +1,220 @@
 # 🏦 RBI CSF Compliance Tool
 
-<div align="center">
-
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=for-the-badge&logo=python&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.35.0-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
-
-**A full-stack Streamlit web application for Urban Cooperative Banks (UCBs) to assess, track, and manage cybersecurity compliance under the RBI Graded Approach Framework.**
-
-[📸 Screenshots](#-screenshots) · [🚀 Getting Started](#-getting-started) · [✨ Features](#-features) · [🗺️ Roadmap](#️-roadmap) · [🤝 Contributing](#-contributing)
-
-</div>
+A web-based Cybersecurity Compliance Assessment Tool for Urban Cooperative Banks (UCBs) built on the **RBI Graded Approach Framework**. Helps banks identify their compliance tier, assess controls, analyse gaps, and generate audit-ready reports.
 
 ---
 
-## 📖 Overview
+## 🌐 Live Demo
 
-The **RBI CSF Compliance Tool** is a guided, end-to-end compliance assessment platform built for Urban Cooperative Banks (UCBs) regulated by the Reserve Bank of India. It implements the **RBI Cybersecurity Framework (CSF) Graded Approach**, helping banks identify their compliance tier (Level I–IV), assess controls across all applicable annexes, visualise gaps, and generate audit-ready reports.
-
-### Why This Tool?
-
-RBI mandates UCBs to self-assess against the Cybersecurity Framework — a process that spans **5 Excel templates**, **122+ controls**, and 4 compliance tiers. Doing this manually is error-prone and time-consuming. This tool automates the entire workflow:
-
-```
-Level Identification → Template Download → Control Assessment → 
-Compliance Dashboard → Gap Analysis → Report Generation → Evidence Repository
-```
+> **http://35.244.61.159**
+> 
+> Hosted on Google Cloud VM — asia-south1-a (Mumbai)
 
 ---
 
-## ✨ Features
-
-### 🎯 Core Modules
+## 📋 Features
 
 | Module | Description |
 |--------|-------------|
-| **Module 1 — Level Identification** | Automatically determines your bank's RBI compliance tier (Level I–IV) based on operational parameters like CPS membership, digital channels, ATM switch, SWIFT interface, and data centre presence |
-| **Module 2 — Template Download** | Downloads the exact Excel control templates applicable to your identified tier (Basic Framework + Annex I through IV) |
-| **Module 3 — Compliance Dashboard** | Upload filled templates to get real-time visualisations — gauge chart, donut chart, per-annex compliance bars, and section-wise breakdowns using Plotly |
-| **Module 4 — Gap Analysis** | Identifies all Non-Compliant and Partially Compliant controls, assigns priority (Critical / High / Medium), and provides filterable gap registers |
-| **Module 5 — Gap Analysis Report** | Generates a fully formatted, downloadable **Word (.docx)** report with coloured tables, recommendations, and Annex IV governance checklists |
-| **Module 6 — Audit Trail Log** | Timestamped log of every action across all modules — uploads, exports, config changes, logins — with CSV export |
-| **Module 7 — Evidence Repository** | Upload, store, and track supporting evidence files (PDFs, screenshots, policy docs) mapped to each individual control |
-
-### 🔒 Security & Authentication
-
-- **PBKDF2-SHA256** password hashing with per-user salts (260,000 iterations)
-- Isolated data rows per organisation — no cross-user data leakage
-- Persistent session storage — data survives page refreshes and browser closes
-- Transparent auto-save after every render cycle
-
-### 💅 UI/UX
-
-- Dark / Light theme toggle with full CSS variable theming
-- Responsive layout with sidebar navigation
-- Real-time compliance score ring in sidebar
-- Progress tracking across all modules
-- Mobile-friendly design
+| **Module 1 — Level Identification** | Determines RBI compliance tier (Level I–IV) based on bank's operational parameters |
+| **Module 2 — Download Templates** | Downloads applicable control assessment templates (Basic + Annex I/II/III/IV) |
+| **Module 3 — Compliance Dashboard** | Upload filled templates and generate real-time compliance charts and scores |
+| **Module 4 — Gap Analysis** | Identifies and prioritises non-compliant and partially compliant controls |
+| **Module 5 — Gap Analysis Report** | Generates a downloadable Word (.docx) report with recommendations |
+| **Module 6 — Audit Trail** | Timestamped log of all actions across every module |
+| **Module 7 — Evidence Repository** | Upload and manage supporting evidence files per control |
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ RBI Graded Approach — Compliance Tiers
+
+| Tier | Criteria | Controls |
+|------|----------|----------|
+| **Level-I** | All UCBs | Basic Framework + Annex I (60 controls) |
+| **Level-II** | CPS Sub-member + Internet/Mobile Banking or CTS/IMPS/UPI | + Annex II (83 controls) |
+| **Level-III** | Direct CPS member / Own ATM Switch / SWIFT Interface | + Annex III (108 controls) |
+| **Level-IV** | CPS member + ATM & SWIFT, or hosts Data Centre | + Annex IV (122 controls) |
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend/Backend** — [Streamlit](https://streamlit.io/)
+- **Database** — SQLite (via `db_store.py`)
+- **Charts** — Plotly
+- **Report Generation** — python-docx
+- **Data Processing** — Pandas, OpenPyXL
+- **Web Server** — Nginx (reverse proxy)
+- **Process Manager** — systemd
+- **Hosting** — Google Cloud Compute Engine (e2 series, asia-south1-a)
+
+---
+
+## 🚀 Deployment Guide (Google Cloud VM)
+
+### Prerequisites
+- Google Cloud VM instance running Ubuntu 22.04+
+- VM external IP noted (e.g. `35.244.61.159`)
+- Firewall rules open for TCP ports `80` and `8501`
+
+### 1. SSH into your VM
+Click the **SSH** button in Google Cloud Console.
+
+### 2. Install dependencies
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y python3 python3-pip python3-venv nginx git
+```
+
+### 3. Upload project files
+Use the ⚙️ gear icon in the SSH browser window → **Upload file**.
+Upload all `.py`, `.xlsx`, `.css`, and `requirements.txt` files, then:
+```bash
+mkdir -p ~/rbi_app
+mv ~/*.py ~/rbi_app/
+mv ~/*.xlsx ~/rbi_app/
+mv ~/*.css ~/rbi_app/
+mv ~/*.txt ~/rbi_app/
+```
+
+### 4. Set up Python virtual environment
+```bash
+cd ~/rbi_app
+python3 -m venv venv
+source venv/bin/activate
+pip install streamlit pandas openpyxl plotly python-docx Pillow
+```
+
+### 5. Create systemd service (runs 24/7)
+```bash
+sudo nano /etc/systemd/system/rbi_app.service
+```
+
+Paste:
+```ini
+[Unit]
+Description=RBI CSF Streamlit App
+After=network.target
+
+[Service]
+User=YOUR_USERNAME
+WorkingDirectory=/home/YOUR_USERNAME/rbi_app
+ExecStart=/home/YOUR_USERNAME/rbi_app/venv/bin/streamlit run App.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable rbi_app
+sudo systemctl start rbi_app
+```
+
+### 6. Configure Nginx
+```bash
+sudo nano /etc/nginx/sites-available/rbi_app
+```
+
+Paste:
+```nginx
+server {
+    listen 80;
+    server_name YOUR_IP_OR_DOMAIN;
+
+    location / {
+        proxy_pass http://localhost:8501;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 86400;
+    }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/rbi_app /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl restart nginx
+sudo systemctl enable nginx
+```
+
+### 7. Open firewall ports in Google Cloud
+Go to **VPC Network → Firewall → Create Firewall Rule**:
+- Port `80` (HTTP) — source `0.0.0.0/0`
+- Port `8501` (Streamlit) — source `0.0.0.0/0`
+
+---
+
+## 🔄 Updating the App
+
+Whenever you change any file:
+
+```bash
+# 1. Upload the changed file via SSH gear icon, then move it
+mv ~/changed_file.py ~/rbi_app/
+
+# 2. Restart the app — one command, done
+sudo systemctl restart rbi_app
+```
+
+---
+
+## 🧰 Useful Commands
+
+```bash
+# Check if app is running
+sudo systemctl status rbi_app
+
+# View live logs
+sudo journalctl -u rbi_app -f
+
+# Restart app
+sudo systemctl restart rbi_app
+
+# Restart nginx
+sudo systemctl restart nginx
+```
+
+---
+
+## 🗄️ Database
+
+Uses **SQLite** stored locally at `rbi_csf_data.db`. Each user/bank has fully isolated data rows. The database is auto-created on first run — no setup needed.
+
+**Schema includes:**
+- `users` — credentials (PBKDF2-SHA256 hashed)
+- `bank_profiles` — Module 1 level and flags
+- `compliance_data` — Module 3 scores and DataFrames
+- `gap_data` — Module 4 gap register
+- `evidence_files` — Module 7 binary file attachments
+- `audit_events` — Full timestamped audit log
+- `compliance_history` — Trend tracking snapshots
+- `gap_history` — Gap trend tracking
+
+---
+
+## 📁 Project Structure
 
 ```
-rbi-csf-tool/
+rbi_app/
 │
 ├── App.py                          # Main entry point, routing, auth gate, auto-save
-├── auth.py                         # Login / Register UI, PBKDF2 auth
-├── db_store.py                     # SQLite persistence layer (all CRUD operations)
-├── style.css                       # Global CSS with CSS variable theming
-│
+├── auth.py                         # Login / register UI
+├── db_store.py                     # SQLite persistence layer
 ├── module1.py                      # Level Identification
-├── module2.py                      # Template Download
-├── module3.py                      # Compliance Dashboard (Plotly charts)
+├── module2.py                      # Template Downloads
+├── module3.py                      # Compliance Dashboard
 ├── module4_gap.py                  # Gap Analysis
-├── module5.py                      # Word Report Generator
+├── module5.py                      # Gap Analysis Report + Word export
 ├── module7_audit.py                # Audit Trail
 ├── module8_evidence.py             # Evidence Repository
+├── style.css                       # Global CSS (dark + light theme)
 │
 ├── Basic_Cybersecurity_Framework.xlsx
 ├── Annex_1_cybersecurity_control.xlsx
@@ -89,206 +225,37 @@ rbi-csf-tool/
 └── requirements.txt
 ```
 
-### Database Schema (SQLite)
+---
 
-```sql
-users              -- Credentials, roles, login timestamps
-bank_profiles      -- Module 1: bank name, level, checkbox flags (JSON)
-compliance_data    -- Module 3: summary dict + combined DataFrame (CSV)
-gap_data           -- Module 4: gap DataFrame (CSV)
-evidence_files     -- Module 7: binary evidence BLOBs + metadata
-audit_events       -- Module 6: full timestamped event log
-compliance_history -- Trend tracking for compliance score over time
-gap_history        -- Trend tracking for gap counts over time
+## 🔒 Security
+
+- Passwords hashed with **PBKDF2-SHA256** (260,000 iterations)
+- Each bank's data is **fully isolated** by `user_id`
+- Session persistence across logins
+- Auto-save after every render cycle
+
+---
+
+## 📦 Requirements
+
+```
+streamlit==1.35.0
+pandas==2.2.2
+openpyxl==3.1.2
+plotly==5.22.0
+python-docx==1.1.2
+Pillow==10.3.0
 ```
 
 ---
 
-## 🚀 Getting Started
+## 👤 Author
 
-### Prerequisites
-
-- Python 3.9 or higher
-- pip
-
-### Installation
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/MITANSH11/RBI-CSF-TOOL.git
-cd RBI-CSF-TOOL
-
-# 2. (Recommended) Create a virtual environment
-python -m venv venv
-source venv/bin/activate        # Linux/macOS
-venv\Scripts\activate           # Windows
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run the application
-streamlit run App.py
-```
-
-The app will open at `http://localhost:8501`
-
-### First Run
-
-1. Click **Register** and create an account with your bank name
-2. Go to **Module 1** and select your bank's operational parameters
-3. Your compliance tier (Level I–IV) is automatically determined
-4. Download your applicable templates from **Module 2**
-5. Fill in the `Control Implemented?` column in each Excel file
-6. Upload the filled files in **Module 3** and **Module 4**
-7. Export your gap analysis report from **Module 5**
-
----
-
-## 📋 RBI Compliance Levels
-
-| Tier | Applicable Banks | Templates | Controls |
-|------|-----------------|-----------|----------|
-| **Level-I** | All UCBs | Basic + Annex I | 60 |
-| **Level-II** | CPS Sub-member + Internet/Mobile Banking or CTS/IMPS/UPI | Basic + Annex I + II | 83 |
-| **Level-III** | Direct CPS member / Own ATM Switch / SWIFT Interface | Basic + Annex I + II + III | 108 |
-| **Level-IV** | CPS member with ATM+SWIFT, or UCBs hosting Data Centre | Basic + Annex I + II + III + IV | 122 |
-
----
-
-## 📸 Screenshots
-
-> Coming soon — add screenshots of each module here
-
-| Module 1 — Level Identification | Module 3 — Compliance Dashboard |
-|--------------------------------|----------------------------------|
-| *(screenshot)* | *(screenshot)* |
-
-| Module 4 — Gap Analysis | Module 5 — Word Report |
-|-------------------------|------------------------|
-| *(screenshot)* | *(screenshot)* |
-
----
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `RBI_DB_PATH` | `./rbi_csf_data.db` | Override the SQLite database file path (useful for cloud deployments) |
-
-```bash
-# Example: store DB in a persistent volume on cloud
-export RBI_DB_PATH=/data/rbi_csf_data.db
-streamlit run App.py
-```
-
-### Deploying to Streamlit Cloud
-
-1. Push your repo to GitHub (ensure Excel template files are included)
-2. Go to [share.streamlit.io](https://share.streamlit.io) → New App
-3. Set the main file to `App.py`
-4. Add `RBI_DB_PATH` in Secrets if using a mounted volume
-5. Deploy
-
-> **Note:** On Streamlit Community Cloud, the SQLite DB resets on each deploy. For persistent storage, point `RBI_DB_PATH` to an external volume or migrate to PostgreSQL (see below).
-
-### Migrating to PostgreSQL
-
-The `db_store.py` module is designed for easy database swap. Replace `_conn()` with a `psycopg2` connection and change `?` placeholders to `%s`:
-
-```python
-import psycopg2
-
-def _conn():
-    return psycopg2.connect(os.environ["DATABASE_URL"])
-```
-
-All public function signatures remain unchanged.
-
----
-
-## 🗺️ Roadmap
-
-### Planned Enhancements
-
-- [ ] **Multi-user admin panel** — Admin dashboard to view all registered banks and their compliance scores
-- [ ] **Email notifications** — Automated reminders for pending assessments and RBI submission deadlines
-- [ ] **Compliance trend charts** — Historical compliance score line charts across assessment cycles
-- [ ] **Bulk evidence upload** — ZIP import for mass evidence attachment
-- [ ] **PDF report export** — Alternative to Word for read-only report sharing
-- [ ] **API endpoints** — REST API for integrating with bank's existing GRC platforms
-- [ ] **Role-based access control** — Separate roles for CISO, IT Officer, and Board members
-- [ ] **Control tagging** — Tag controls by NIST CSF, ISO 27001, or CIS benchmarks for cross-framework mapping
-- [ ] **Remediation tracker** — Assign owners, due dates, and status to each gap
-- [ ] **PostgreSQL / Supabase support** — First-class cloud database support out of the box
-
-### Known Issues / In Progress
-
-- Evidence tab coverage counter shows 0 on fresh load (fixed in latest commit)
-- Module 1 widget keys cleared on navigation (fixed with `_seed_widget_keys` guard)
-
----
-
-## 🧰 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | [Streamlit](https://streamlit.io) 1.35.0 |
-| Charts | [Plotly](https://plotly.com/python/) 5.22.0 |
-| Data Processing | [Pandas](https://pandas.pydata.org/) 2.2.2 |
-| Excel Parsing | [openpyxl](https://openpyxl.readthedocs.io/) 3.1.2 |
-| Word Generation | [python-docx](https://python-docx.readthedocs.io/) 1.1.2 |
-| Database | SQLite (via `sqlite3`) |
-| Auth | PBKDF2-SHA256 (stdlib `hashlib`) |
-| Deployment | Streamlit Community Cloud / Any Python host |
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how to get started:
-
-```bash
-# Fork the repo, then:
-git checkout -b feature/your-feature-name
-# Make your changes
-git commit -m "feat: describe your change"
-git push origin feature/your-feature-name
-# Open a Pull Request
-```
-
-### Contribution Guidelines
-
-- Follow the existing module structure (`show_moduleN()` entry point)
-- All DB operations go through `db_store.py` — do not write to DB directly from modules
-- Log user-triggered events via `log_event()` from `module7_audit.py`
-- Keep CSS changes in `style.css` using existing CSS variables
+**Mitansh Prajapati**  
+GitHub: [@MITANSH11](https://github.com/MITANSH11)
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgements
-
-- [Reserve Bank of India](https://www.rbi.org.in) — Cybersecurity Framework for Urban Cooperative Banks circular and graded approach guidelines
-- [Streamlit](https://streamlit.io) — Open-source app framework
-- [Plotly](https://plotly.com) — Interactive charting library
-
----
-
-## 📬 Contact
-
-**Mitansh** · [@MITANSH11](https://github.com/MITANSH11)
-
-Project Link: [https://github.com/MITANSH11/RBI-CSF-TOOL](https://github.com/MITANSH11/RBI-CSF-TOOL)
-
----
-
-<div align="center">
-<sub>Built with ❤️ for Urban Cooperative Banks navigating RBI cybersecurity compliance</sub>
-</div>
+This project is for internal compliance use by Urban Cooperative Banks under the RBI Cybersecurity Framework guidelines.
